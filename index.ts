@@ -11,7 +11,7 @@ const DEFAULT_OPTIONS = {
 const bypassProperty = (src, dst, name: string) => {
     Object.defineProperty(dst, name, {
         get: () => src[name],
-        set: (value) => { src[name] = value },
+        set: (value) => {src[name] = value},
         enumerable: true,
     });
 };
@@ -24,7 +24,15 @@ const updateReconnectionDelay = (config, previousDelay) => {
     return (newDelay > config.maxReconnectionDelay)
         ? config.maxReconnectionDelay
         : newDelay;
-}
+};
+
+const reassignEventListeners = (webSocket, eventListeners) {
+    Object.keys(eventListeners).forEach(type => {
+        eventListeners[type].forEach(([listener, options]) => {
+            webSocket.addEventListener(type, listener, options);
+        });
+    });
+};
 
 const WEBSOCKET_BYPASSED_PROPERTIES = [
     'CONNECTING',
@@ -72,7 +80,7 @@ const ReconnectingWebsocket = function(
         throw new TypeError('WebSocket constructor not set. Set `options.constructor`');
     }
 
-    const log = config.debug ? (...text) => console.log('RWS:', ...text) : () => {};
+    const log = config.debug ? (...params) => console.log('RWS:', ...params) : () => {};
 
     const connect = () => {
         log('connect');
@@ -99,6 +107,8 @@ const ReconnectingWebsocket = function(
             }
             connectingTimeout = setTimeout(connect, reconnectDelay);
         });
+
+        reassignEventListeners(ws, eventListeners);
     };
 
     log('init');
@@ -108,18 +118,18 @@ const ReconnectingWebsocket = function(
 
     this.addEventListener = (type: string, listener: Function, options: any) => {
         if (Array.isArray(this.eventListeners[type])) {
-            if (!this.eventListeners[type].some(({l}) => l === listener)) {
-                this.eventListeners[type].push({listener, options});
+            if (!this.eventListeners[type].some(([l]) => l === listener)) {
+                this.eventListeners[type].push([listener, options]);
             }
         } else {
-            this.eventListeners[type] = [{listener, options}];
+            this.eventListeners[type] = [[listener, options]];
         }
         ws.addEventListener(type, listener, options);
     };
 
     this.removeEventListener = (type: string, listener: Function, options: any) => {
         if (Array.isArray(this.eventListeners[type])) {
-            this.eventListeners[type] = this.eventListeners[type].filter(({l}) => l !== listener);
+            this.eventListeners[type] = this.eventListeners[type].filter(([l]) => l !== listener);
         }
         ws.removeEventListener(type, listener, options);
     };
