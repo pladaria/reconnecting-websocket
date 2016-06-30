@@ -1,0 +1,26 @@
+{
+  "name": "reconnecting-websocket",
+  "version": "1.0.0",
+  "description": "Reconnecting WebSocket",
+  "main": "index.js",
+  "scripts": {
+    "test": "ava"
+  },
+  "keywords": [
+    "websocket",
+    "reconnecting",
+    "reconnect",
+    "forever",
+    "persistent",
+    "automatic"
+  ],
+  "author": "Pedro Ladaria <pedro.ladaria@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "ava": "^0.15.2",
+    "html5-websocket": "^0.2.0",
+    "ws": "^1.1.1"
+  },
+  "dependencies": {
+  }
+}
