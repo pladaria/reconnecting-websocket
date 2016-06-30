@@ -98,22 +98,22 @@ var ReconnectingWebsocket = function (url, protocols, options) {
     connect();
     WEBSOCKET_BYPASSED_PROPERTIES.forEach(function (name) { return bypassProperty(ws, _this, name); });
     this.addEventListener = function (type, listener, options) {
-        if (Array.isArray(this.eventListeners[type])) {
-            if (!this.eventListeners[type].some(function (_a) {
+        if (Array.isArray(_this.eventListeners[type])) {
+            if (!_this.eventListeners[type].some(function (_a) {
                 var l = _a.l;
                 return l === listener;
             })) {
-                this.eventListeners[type].push({ listener: listener, options: options });
+                _this.eventListeners[type].push({ listener: listener, options: options });
             }
         }
         else {
-            this.eventListeners[type] = [{ listener: listener, options: options }];
+            _this.eventListeners[type] = [{ listener: listener, options: options }];
         }
         ws.addEventListener(type, listener, options);
     };
     this.removeEventListener = function (type, listener, options) {
-        if (Array.isArray(this.eventListeners[type])) {
-            this.eventListeners[type] = this.eventListeners[type].filter(function (_a) {
+        if (Array.isArray(_this.eventListeners[type])) {
+            _this.eventListeners[type] = _this.eventListeners[type].filter(function (_a) {
                 var l = _a.l;
                 return l !== listener;
             });
