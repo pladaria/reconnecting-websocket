@@ -24,6 +24,14 @@ var updateReconnectionDelay = function (config, previousDelay) {
         ? config.maxReconnectionDelay
         : newDelay;
 };
+var reassignEventListeners = function (ws, eventListeners) {
+    Object.keys(eventListeners).forEach(function (type) {
+        eventListeners[type].forEach(function (_a) {
+            var listener = _a[0], options = _a[1];
+            ws.addEventListener(type, listener, options);
+        });
+    });
+};
 var WEBSOCKET_BYPASSED_PROPERTIES = [
     'CONNECTING',
     'OPEN',
@@ -61,14 +69,16 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         .filter(function (key) { return options.hasOwnProperty(key); })
         .forEach(function (key) { return config[key] = options[key]; });
     if (typeof config.constructor !== 'function') {
+        console.log(config);
+        console.log(config.constructor, typeof config.constructor);
         throw new TypeError('WebSocket constructor not set. Set `options.constructor`');
     }
     var log = config.debug ? function () {
-        var text = [];
+        var params = [];
         for (var _i = 0; _i < arguments.length; _i++) {
-            text[_i - 0] = arguments[_i];
+            params[_i - 0] = arguments[_i];
         }
-        return console.log.apply(console, ['RWS:'].concat(text));
+        return console.log.apply(console, ['RWS:'].concat(params));
     } : function () { };
     var connect = function () {
         log('connect');
@@ -93,28 +103,29 @@ var ReconnectingWebsocket = function (url, protocols, options) {
             }
             connectingTimeout = setTimeout(connect, reconnectDelay);
         });
+        reassignEventListeners(ws, eventListeners);
     };
     log('init');
     connect();
     WEBSOCKET_BYPASSED_PROPERTIES.forEach(function (name) { return bypassProperty(ws, _this, name); });
     this.addEventListener = function (type, listener, options) {
-        if (Array.isArray(_this.eventListeners[type])) {
-            if (!_this.eventListeners[type].some(function (_a) {
-                var l = _a.l;
+        if (Array.isArray(eventListeners[type])) {
+            if (!eventListeners[type].some(function (_a) {
+                var l = _a[0];
                 return l === listener;
             })) {
-                _this.eventListeners[type].push({ listener: listener, options: options });
+                eventListeners[type].push([listener, options]);
             }
         }
         else {
-            _this.eventListeners[type] = [{ listener: listener, options: options }];
+            eventListeners[type] = [[listener, options]];
         }
         ws.addEventListener(type, listener, options);
     };
     this.removeEventListener = function (type, listener, options) {
-        if (Array.isArray(_this.eventListeners[type])) {
-            _this.eventListeners[type] = _this.eventListeners[type].filter(function (_a) {
-                var l = _a.l;
+        if (Array.isArray(eventListeners[type])) {
+            eventListeners[type] = eventListeners[type].filter(function (_a) {
+                var l = _a[0];
                 return l !== listener;
             });
         }

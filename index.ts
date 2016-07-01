@@ -26,10 +26,10 @@ const updateReconnectionDelay = (config, previousDelay) => {
         : newDelay;
 };
 
-const reassignEventListeners = (webSocket, eventListeners) {
+const reassignEventListeners = (ws, eventListeners) => {
     Object.keys(eventListeners).forEach(type => {
         eventListeners[type].forEach(([listener, options]) => {
-            webSocket.addEventListener(type, listener, options);
+            ws.addEventListener(type, listener, options);
         });
     });
 };
@@ -77,6 +77,8 @@ const ReconnectingWebsocket = function(
         .forEach(key => config[key] = options[key]);
 
     if (typeof config.constructor !== 'function') {
+        console.log(config);
+        console.log(config.constructor, typeof config.constructor);
         throw new TypeError('WebSocket constructor not set. Set `options.constructor`');
     }
 
@@ -117,19 +119,19 @@ const ReconnectingWebsocket = function(
     WEBSOCKET_BYPASSED_PROPERTIES.forEach(name => bypassProperty(ws, this, name));
 
     this.addEventListener = (type: string, listener: Function, options: any) => {
-        if (Array.isArray(this.eventListeners[type])) {
-            if (!this.eventListeners[type].some(([l]) => l === listener)) {
-                this.eventListeners[type].push([listener, options]);
+        if (Array.isArray(eventListeners[type])) {
+            if (!eventListeners[type].some(([l]) => l === listener)) {
+                eventListeners[type].push([listener, options]);
             }
         } else {
-            this.eventListeners[type] = [[listener, options]];
+            eventListeners[type] = [[listener, options]];
         }
         ws.addEventListener(type, listener, options);
     };
 
     this.removeEventListener = (type: string, listener: Function, options: any) => {
-        if (Array.isArray(this.eventListeners[type])) {
-            this.eventListeners[type] = this.eventListeners[type].filter(([l]) => l !== listener);
+        if (Array.isArray(eventListeners[type])) {
+            eventListeners[type] = eventListeners[type].filter(([l]) => l !== listener);
         }
         ws.removeEventListener(type, listener, options);
     };

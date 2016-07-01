@@ -2,16 +2,21 @@
   "name": "reconnecting-websocket",
   "version": "1.0.0",
   "description": "Reconnecting WebSocket",
-  "main": "index.js",
+  "main": "build/index.js",
   "scripts": {
-    "test": "ava"
+    "build": "tsc",
+    "test": "nyc ava --verbose test/test.js",
+    "pretest": "npm run build"
   },
   "keywords": [
     "websocket",
+    "client",
     "reconnecting",
+    "reconnection",
     "reconnect",
     "forever",
     "persistent",
+    "forever",
     "automatic"
   ],
   "author": "Pedro Ladaria <pedro.ladaria@gmail.com>",
@@ -19,8 +24,8 @@
   "devDependencies": {
     "ava": "^0.15.2",
     "html5-websocket": "^0.2.0",
+    "nyc": "^6.6.1",
     "ws": "^1.1.1"
   },
-  "dependencies": {
-  }
+  "dependencies": {}
 }
