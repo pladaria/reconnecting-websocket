@@ -13,6 +13,7 @@ const bypassProperty = (src, dst, name: string) => {
         get: () => src[name],
         set: (value) => {src[name] = value},
         enumerable: true,
+        configurable: true,
     });
 };
 
@@ -34,26 +35,6 @@ const reassignEventListeners = (ws, listeners) => {
     });
 };
 
-const WEBSOCKET_BYPASSED_PROPERTIES = [
-    'CONNECTING',
-    'OPEN',
-    'CLOSING',
-    'CLOSED',
-    'url',
-    'readyState',
-    'bufferedAmount',
-    'extensions',
-    'protocol',
-    'binaryType',
-    'close',
-    'send',
-    'dispatchEvent',
-    'onmessage',
-    'onopen',
-    'onerror',
-    'onclose',
-];
-
 const ReconnectingWebsocket = function(
     url: string,
     protocols?: string|string[],
@@ -63,6 +44,7 @@ const ReconnectingWebsocket = function(
     let connectingTimeout;
     let reconnectDelay = 0;
     let retriesCount = 0;
+    let shouldRetry = true;
     const listeners = {};
 
     // require new to construct
@@ -87,14 +69,23 @@ const ReconnectingWebsocket = function(
 
         ws = new (<any>config.constructor)(url, protocols);
 
-        ws.addEventListener('open', (evt) => {
+        log('bypass properties');
+        for (let key in ws) {
+            // @todo move to constant
+            if (['addEventListener', 'removeEventListener', 'close'].indexOf(key) < 0) {
+                bypassProperty(ws, this, key);
+            }
+        }
+
+        ws.addEventListener('open', () => {
             log('open');
             reconnectDelay = initReconnectionDelay(config);
-            clearTimeout(connectingTimeout);
+            log('reconnectDelay:', reconnectDelay);
+            // clearTimeout(connectingTimeout);
             retriesCount = 0;
         });
 
-        ws.addEventListener('close', (evt) => {
+        ws.addEventListener('close', () => {
             log('close');
             retriesCount++;
             if (retriesCount > config.maxRetries) {
@@ -105,7 +96,11 @@ const ReconnectingWebsocket = function(
             } else {
                 reconnectDelay = updateReconnectionDelay(config, reconnectDelay)
             }
-            connectingTimeout = setTimeout(connect, reconnectDelay);
+            log('reconnectDelay:', reconnectDelay);
+
+            if (shouldRetry) {
+                setTimeout(connect, reconnectDelay);
+            }
         });
 
         reassignEventListeners(ws, listeners);
@@ -114,7 +109,10 @@ const ReconnectingWebsocket = function(
     log('init');
     connect();
 
-    WEBSOCKET_BYPASSED_PROPERTIES.forEach(name => bypassProperty(ws, this, name));
+    this.close = () => {
+        shouldRetry = false;
+        ws.close();
+    };
 
     this.addEventListener = (type: string, listener: Function, options: any) => {
         if (Array.isArray(listeners[type])) {

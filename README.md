@@ -8,7 +8,10 @@ WARNING! Work in progress
 - Reassign event listeners when a new WebSocket instance is created
 - Keep same WebSocket interface
 - Automatic reconnection using rfc6455 guidelines
+- Handle connection timeouts
 - Dependency free (do not depend on window, dom or any event listener library)
 - Full test coverage
 
-##
+## Future improvements
+
+- autoOpen option

@@ -13,6 +13,7 @@ var bypassProperty = function (src, dst, name) {
         get: function () { return src[name]; },
         set: function (value) { src[name] = value; },
         enumerable: true,
+        configurable: true,
     });
 };
 var initReconnectionDelay = function (config) {
@@ -32,25 +33,6 @@ var reassignEventListeners = function (ws, listeners) {
         });
     });
 };
-var WEBSOCKET_BYPASSED_PROPERTIES = [
-    'CONNECTING',
-    'OPEN',
-    'CLOSING',
-    'CLOSED',
-    'url',
-    'readyState',
-    'bufferedAmount',
-    'extensions',
-    'protocol',
-    'binaryType',
-    'close',
-    'send',
-    'dispatchEvent',
-    'onmessage',
-    'onopen',
-    'onerror',
-    'onclose',
-];
 var ReconnectingWebsocket = function (url, protocols, options) {
     var _this = this;
     if (options === void 0) { options = {}; }
@@ -58,6 +40,7 @@ var ReconnectingWebsocket = function (url, protocols, options) {
     var connectingTimeout;
     var reconnectDelay = 0;
     var retriesCount = 0;
+    var shouldRetry = true;
     var listeners = {};
     // require new to construct
     if (!(this instanceof ReconnectingWebsocket)) {
@@ -81,13 +64,21 @@ var ReconnectingWebsocket = function (url, protocols, options) {
     var connect = function () {
         log('connect');
         ws = new config.constructor(url, protocols);
-        ws.addEventListener('open', function (evt) {
+        log('bypass properties');
+        for (var key in ws) {
+            // @todo move to constant
+            if (['addEventListener', 'removeEventListener', 'close'].indexOf(key) < 0) {
+                bypassProperty(ws, _this, key);
+            }
+        }
+        ws.addEventListener('open', function () {
             log('open');
             reconnectDelay = initReconnectionDelay(config);
-            clearTimeout(connectingTimeout);
+            log('reconnectDelay:', reconnectDelay);
+            // clearTimeout(connectingTimeout);
             retriesCount = 0;
         });
-        ws.addEventListener('close', function (evt) {
+        ws.addEventListener('close', function () {
             log('close');
             retriesCount++;
             if (retriesCount > config.maxRetries) {
@@ -99,13 +90,19 @@ var ReconnectingWebsocket = function (url, protocols, options) {
             else {
                 reconnectDelay = updateReconnectionDelay(config, reconnectDelay);
             }
-            connectingTimeout = setTimeout(connect, reconnectDelay);
+            log('reconnectDelay:', reconnectDelay);
+            if (shouldRetry) {
+                setTimeout(connect, reconnectDelay);
+            }
         });
         reassignEventListeners(ws, listeners);
     };
     log('init');
     connect();
-    WEBSOCKET_BYPASSED_PROPERTIES.forEach(function (name) { return bypassProperty(ws, _this, name); });
+    this.close = function () {
+        shouldRetry = false;
+        ws.close();
+    };
     this.addEventListener = function (type, listener, options) {
         if (Array.isArray(listeners[type])) {
             if (!listeners[type].some(function (_a) {

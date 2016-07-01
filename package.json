@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "test": "nyc ava --verbose test/test.js",
-    "pretest": "npm run build"
+    "pretest": "npm run build",
+    "report": "nyc report --reporter=html && opn coverage/index.html"
   },
   "keywords": [
     "websocket",
@@ -23,9 +24,21 @@
   "license": "MIT",
   "devDependencies": {
     "ava": "^0.15.2",
-    "html5-websocket": "^0.3.0",
+    "html5-websocket": "^0.5.0",
     "nyc": "^6.6.1",
+    "opn-cli": "^3.1.0",
     "ws": "^1.1.1"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pladaria/reconnecting-websocket.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pladaria/reconnecting-websocket/issues"
+  },
+  "homepage": "https://github.com/pladaria/reconnecting-websocket#readme"
 }
