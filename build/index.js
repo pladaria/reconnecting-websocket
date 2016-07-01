@@ -6,7 +6,7 @@ var DEFAULT_OPTIONS = {
     reconnectionDelayGrowFactor: 1.3,
     connectionTimeout: 4000,
     maxRetries: Infinity,
-    debug: true,
+    debug: false,
 };
 var bypassProperty = function (src, dst, name) {
     Object.defineProperty(dst, name, {
@@ -24,9 +24,9 @@ var updateReconnectionDelay = function (config, previousDelay) {
         ? config.maxReconnectionDelay
         : newDelay;
 };
-var reassignEventListeners = function (ws, eventListeners) {
-    Object.keys(eventListeners).forEach(function (type) {
-        eventListeners[type].forEach(function (_a) {
+var reassignEventListeners = function (ws, listeners) {
+    Object.keys(listeners).forEach(function (type) {
+        listeners[type].forEach(function (_a) {
             var listener = _a[0], options = _a[1];
             ws.addEventListener(type, listener, options);
         });
@@ -58,7 +58,7 @@ var ReconnectingWebsocket = function (url, protocols, options) {
     var connectingTimeout;
     var reconnectDelay = 0;
     var retriesCount = 0;
-    var eventListeners = {};
+    var listeners = {};
     // require new to construct
     if (!(this instanceof ReconnectingWebsocket)) {
         throw new TypeError("Failed to construct 'ReconnectingWebSocket': Please use the 'new' operator");
@@ -69,8 +69,6 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         .filter(function (key) { return options.hasOwnProperty(key); })
         .forEach(function (key) { return config[key] = options[key]; });
     if (typeof config.constructor !== 'function') {
-        console.log(config);
-        console.log(config.constructor, typeof config.constructor);
         throw new TypeError('WebSocket constructor not set. Set `options.constructor`');
     }
     var log = config.debug ? function () {
@@ -103,28 +101,28 @@ var ReconnectingWebsocket = function (url, protocols, options) {
             }
             connectingTimeout = setTimeout(connect, reconnectDelay);
         });
-        reassignEventListeners(ws, eventListeners);
+        reassignEventListeners(ws, listeners);
     };
     log('init');
     connect();
     WEBSOCKET_BYPASSED_PROPERTIES.forEach(function (name) { return bypassProperty(ws, _this, name); });
     this.addEventListener = function (type, listener, options) {
-        if (Array.isArray(eventListeners[type])) {
-            if (!eventListeners[type].some(function (_a) {
+        if (Array.isArray(listeners[type])) {
+            if (!listeners[type].some(function (_a) {
                 var l = _a[0];
                 return l === listener;
             })) {
-                eventListeners[type].push([listener, options]);
+                listeners[type].push([listener, options]);
             }
         }
         else {
-            eventListeners[type] = [[listener, options]];
+            listeners[type] = [[listener, options]];
         }
         ws.addEventListener(type, listener, options);
     };
     this.removeEventListener = function (type, listener, options) {
-        if (Array.isArray(eventListeners[type])) {
-            eventListeners[type] = eventListeners[type].filter(function (_a) {
+        if (Array.isArray(listeners[type])) {
+            listeners[type] = listeners[type].filter(function (_a) {
                 var l = _a[0];
                 return l !== listener;
             });

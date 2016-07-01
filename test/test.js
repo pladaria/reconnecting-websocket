@@ -1,13 +1,15 @@
-const html5Websocket = require('html5-websocket');
+const html5Websocket = require('../../html5-websocket');
 const WebSocketServer = require('ws').Server;
 const WebSocket = require('..');
 const test = require('ava');
+const PORT = 50000;
 
-const options = {
+const BASE_OPTIONS = {
     constructor: html5Websocket,
+    debug: false,
 };
 
-test('throws if no constructor is available', t => {
+test('throws with invalid constructor', t => {
     t.throws(() => {
         new WebSocket('ws://foo.bar:1234', null, {constructor: null});
     }, TypeError);
@@ -19,27 +21,23 @@ test('throws if not created with `new`', t => {
     }, TypeError);
 });
 
-test.cb.only('connect, send, receive, close', t => {
-    const wss = new WebSocketServer({port: 50000});
-    console.log('init');
-
+test.cb('happy case: connect, send, receive, close', t => {
+    const anyMessageText = 'hello';
+    const wss = new WebSocketServer({port: PORT});
     wss.on('connection', (ws) => {
-        console.log('server init');
         ws.on('message', (msg) => {
             ws.send(msg);
         });
     });
 
-    const ws = new WebSocket('ws://localhost:50000', null, options);
+    const ws = new WebSocket(`ws://localhost:${PORT}`, null, BASE_OPTIONS);
     ws.addEventListener('open', () => {
-        ws.send('hello');
+        ws.send(anyMessageText);
     });
     ws.addEventListener('message', (msg) => {
-        t.is(msg.data, 'hello');
-        console.log(ws.readyState, ws.close);
+        t.is(msg.data, anyMessageText);
         ws.close();
         wss.close();
         t.end();
     });
-
 });

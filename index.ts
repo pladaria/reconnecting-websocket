@@ -5,7 +5,7 @@ const DEFAULT_OPTIONS = {
     reconnectionDelayGrowFactor: 1.3,
     connectionTimeout: 4000,
     maxRetries: Infinity,
-    debug: true, // @todo change to false
+    debug: false,
 };
 
 const bypassProperty = (src, dst, name: string) => {
@@ -26,9 +26,9 @@ const updateReconnectionDelay = (config, previousDelay) => {
         : newDelay;
 };
 
-const reassignEventListeners = (ws, eventListeners) => {
-    Object.keys(eventListeners).forEach(type => {
-        eventListeners[type].forEach(([listener, options]) => {
+const reassignEventListeners = (ws, listeners) => {
+    Object.keys(listeners).forEach(type => {
+        listeners[type].forEach(([listener, options]) => {
             ws.addEventListener(type, listener, options);
         });
     });
@@ -63,7 +63,7 @@ const ReconnectingWebsocket = function(
     let connectingTimeout;
     let reconnectDelay = 0;
     let retriesCount = 0;
-    const eventListeners = {};
+    const listeners = {};
 
     // require new to construct
     if (!(this instanceof ReconnectingWebsocket)) {
@@ -77,8 +77,6 @@ const ReconnectingWebsocket = function(
         .forEach(key => config[key] = options[key]);
 
     if (typeof config.constructor !== 'function') {
-        console.log(config);
-        console.log(config.constructor, typeof config.constructor);
         throw new TypeError('WebSocket constructor not set. Set `options.constructor`');
     }
 
@@ -110,7 +108,7 @@ const ReconnectingWebsocket = function(
             connectingTimeout = setTimeout(connect, reconnectDelay);
         });
 
-        reassignEventListeners(ws, eventListeners);
+        reassignEventListeners(ws, listeners);
     };
 
     log('init');
@@ -119,19 +117,19 @@ const ReconnectingWebsocket = function(
     WEBSOCKET_BYPASSED_PROPERTIES.forEach(name => bypassProperty(ws, this, name));
 
     this.addEventListener = (type: string, listener: Function, options: any) => {
-        if (Array.isArray(eventListeners[type])) {
-            if (!eventListeners[type].some(([l]) => l === listener)) {
-                eventListeners[type].push([listener, options]);
+        if (Array.isArray(listeners[type])) {
+            if (!listeners[type].some(([l]) => l === listener)) {
+                listeners[type].push([listener, options]);
             }
         } else {
-            eventListeners[type] = [[listener, options]];
+            listeners[type] = [[listener, options]];
         }
         ws.addEventListener(type, listener, options);
     };
 
     this.removeEventListener = (type: string, listener: Function, options: any) => {
-        if (Array.isArray(eventListeners[type])) {
-            eventListeners[type] = eventListeners[type].filter(([l]) => l !== listener);
+        if (Array.isArray(listeners[type])) {
+            listeners[type] = listeners[type].filter(([l]) => l !== listener);
         }
         ws.removeEventListener(type, listener, options);
     };
