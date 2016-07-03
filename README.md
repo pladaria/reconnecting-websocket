@@ -9,7 +9,7 @@ Please do not use for production :(
 ## Features
 
 - Small (~150 LOC)
-- WebSocket API compatible (same interface DOM1, DOM2 event model) - **WIP**
+- WebSocket API compatible (same interface Level0 and Level2 event model) - **WIP**
 - Fully configurable
 - Multiplatform (Web, ServiceWorkers, Node.js, React Native)
 - Dependency free (does not depends on Window, DOM or any EventEmitter library)

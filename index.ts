@@ -27,12 +27,15 @@ const updateReconnectionDelay = (config, previousDelay) => {
         : newDelay;
 };
 
-const reassignEventListeners = (ws, listeners) => {
+const LEVEL_0_EVENTS = ['onopen', 'onclose', 'onmessage', 'onerror'];
+
+const reassignEventListeners = (ws, oldWs, listeners) => {
     Object.keys(listeners).forEach(type => {
         listeners[type].forEach(([listener, options]) => {
             ws.addEventListener(type, listener, options);
         });
     });
+    LEVEL_0_EVENTS.forEach(name => {ws[name] = oldWs[name]});
 };
 
 const ReconnectingWebsocket = function(
@@ -81,7 +84,7 @@ const ReconnectingWebsocket = function(
 
     const connect = () => {
         log('connect');
-
+        const oldWs = ws;
         ws = new (<any>config.constructor)(url, protocols);
 
         connectingTimeout = setTimeout(() => {
@@ -126,7 +129,7 @@ const ReconnectingWebsocket = function(
             }
         });
 
-        reassignEventListeners(ws, listeners);
+        reassignEventListeners(ws, oldWs, listeners);
     };
 
     log('init');
