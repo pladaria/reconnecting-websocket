@@ -1,4 +1,4 @@
-const Html5Websocket = require('../../html5-websocket');
+const Html5Websocket = require('html5-websocket');
 const WebSocketServer = require('ws').Server;
 const WebSocket = require('..');
 const test = require('ava');
