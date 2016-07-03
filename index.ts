@@ -35,7 +35,9 @@ const reassignEventListeners = (ws, oldWs, listeners) => {
             ws.addEventListener(type, listener, options);
         });
     });
-    LEVEL_0_EVENTS.forEach(name => {ws[name] = oldWs[name]});
+    if (oldWs) {
+        LEVEL_0_EVENTS.forEach(name => {ws[name] = oldWs[name]});
+    }
 };
 
 const ReconnectingWebsocket = function(

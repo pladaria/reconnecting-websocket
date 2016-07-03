@@ -25,13 +25,17 @@ var updateReconnectionDelay = function (config, previousDelay) {
         ? config.maxReconnectionDelay
         : newDelay;
 };
-var reassignEventListeners = function (ws, listeners) {
+var LEVEL_0_EVENTS = ['onopen', 'onclose', 'onmessage', 'onerror'];
+var reassignEventListeners = function (ws, oldWs, listeners) {
     Object.keys(listeners).forEach(function (type) {
         listeners[type].forEach(function (_a) {
             var listener = _a[0], options = _a[1];
             ws.addEventListener(type, listener, options);
         });
     });
+    if (oldWs) {
+        LEVEL_0_EVENTS.forEach(function (name) { ws[name] = oldWs[name]; });
+    }
 };
 var ReconnectingWebsocket = function (url, protocols, options) {
     var _this = this;
@@ -80,6 +84,7 @@ var ReconnectingWebsocket = function (url, protocols, options) {
     }, 0); };
     var connect = function () {
         log('connect');
+        var oldWs = ws;
         ws = new config.constructor(url, protocols);
         connectingTimeout = setTimeout(function () {
             log('timeout');
@@ -119,7 +124,7 @@ var ReconnectingWebsocket = function (url, protocols, options) {
                 setTimeout(connect, reconnectDelay);
             }
         });
-        reassignEventListeners(ws, listeners);
+        reassignEventListeners(ws, oldWs, listeners);
     };
     log('init');
     connect();
