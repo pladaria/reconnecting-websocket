@@ -1,5 +1,5 @@
 "use strict";
-var DEFAULT_OPTIONS = {
+var getDefaultOptions = function () { return ({
     constructor: (typeof WebSocket === 'function') ? WebSocket : null,
     maxReconnectionDelay: 10000,
     minReconnectionDelay: 1500,
@@ -7,7 +7,7 @@ var DEFAULT_OPTIONS = {
     connectionTimeout: 4000,
     maxRetries: Infinity,
     debug: false,
-};
+}); };
 var bypassProperty = function (src, dst, name) {
     Object.defineProperty(dst, name, {
         get: function () { return src[name]; },
@@ -51,7 +51,7 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         throw new TypeError("Failed to construct 'ReconnectingWebSocket': Please use the 'new' operator");
     }
     // Set config. Not using `Object.assign` because of IE11
-    var config = DEFAULT_OPTIONS;
+    var config = getDefaultOptions();
     Object.keys(config)
         .filter(function (key) { return options.hasOwnProperty(key); })
         .forEach(function (key) { return config[key] = options[key]; });

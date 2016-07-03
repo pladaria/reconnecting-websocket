@@ -1,4 +1,4 @@
-const DEFAULT_OPTIONS = {
+const getDefaultOptions = () => ({
     constructor: (typeof WebSocket === 'function') ? WebSocket : null,
     maxReconnectionDelay: 10000,
     minReconnectionDelay: 1500,
@@ -6,7 +6,7 @@ const DEFAULT_OPTIONS = {
     connectionTimeout: 4000,
     maxRetries: Infinity,
     debug: false,
-};
+});
 
 const bypassProperty = (src, dst, name: string) => {
     Object.defineProperty(dst, name, {
@@ -58,7 +58,7 @@ const ReconnectingWebsocket = function(
     }
 
     // Set config. Not using `Object.assign` because of IE11
-    const config = DEFAULT_OPTIONS;
+    const config = getDefaultOptions();
     Object.keys(config)
         .filter(key => options.hasOwnProperty(key))
         .forEach(key => config[key] = options[key]);
