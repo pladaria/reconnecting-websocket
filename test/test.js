@@ -66,13 +66,13 @@ test.cb('max retries', t => {
 test.cb('level0 event listeners are reassigned after reconnect', t => {
     const ws = new WebSocket(wsUrl, null, {
         constructor: Html5Websocket,
-        maxRetries: 3,
+        maxRetries: 4,
         reconnectionDelayFactor: 1.2,
         maxReconnectionDelay: 20,
         minReconnectionDelay: 10,
     });
 
-    t.plan(21); // 4 ECONNREFUSED + 1 EHOSTDOWN + 4 * 4 t.is()
+    t.plan(26); // 5 ECONNREFUSED + 1 EHOSTDOWN + 5 * 4 t.is()
     const handleOpen = () => {};
     const handleMessage = () => {};
     const handleClose = () => {

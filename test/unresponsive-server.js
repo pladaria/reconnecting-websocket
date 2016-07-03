@@ -7,9 +7,9 @@ const server = net.createServer(socket => {
     while (Date.now() - time < 2000) {
         // burn cpu
     }
-    console.log('end');
     socket.destroy();
     server.close();
+    console.log('bye');
 });
 
 server.listen(port, () => {
