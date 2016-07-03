@@ -61,9 +61,31 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         }
         return console.log.apply(console, ['RWS:'].concat(params));
     } : function () { };
+    /**
+     * Not using dispatchEvent, otherwise we must use a DOM Event object
+     * Deferred because we want to handle the close event before this
+     */
+    var emitError = function (code, msg) { return setTimeout(function () {
+        var err = new Error(msg);
+        err.code = code;
+        if (Array.isArray(listeners.error)) {
+            listeners.error.forEach(function (_a) {
+                var fn = _a[0];
+                return fn(err);
+            });
+        }
+        if (ws.onerror) {
+            ws.onerror(err);
+        }
+    }, 0); };
     var connect = function () {
         log('connect');
         ws = new config.constructor(url, protocols);
+        connectingTimeout = setTimeout(function () {
+            log('timeout');
+            ws.close();
+            emitError('ETIMEDOUT', 'Connection timeout');
+        }, config.connectionTimeout);
         log('bypass properties');
         for (var key in ws) {
             // @todo move to constant
@@ -72,17 +94,19 @@ var ReconnectingWebsocket = function (url, protocols, options) {
             }
         }
         ws.addEventListener('open', function () {
+            clearTimeout(connectingTimeout);
             log('open');
             reconnectDelay = initReconnectionDelay(config);
             log('reconnectDelay:', reconnectDelay);
-            // clearTimeout(connectingTimeout);
             retriesCount = 0;
         });
         ws.addEventListener('close', function () {
             log('close');
             retriesCount++;
+            log('retries count:', retriesCount);
             if (retriesCount > config.maxRetries) {
-                throw new Error('Too many failed connection attempts');
+                emitError('EHOSTDOWN', 'Too many failed connection attempts');
+                return;
             }
             if (!reconnectDelay) {
                 reconnectDelay = initReconnectionDelay(config);

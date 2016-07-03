@@ -5,7 +5,7 @@
   "main": "build/index.js",
   "scripts": {
     "build": "tsc",
-    "test": "nyc ava --verbose test/test.js",
+    "test": "nyc ava --verbose --serial test/test.js",
     "pretest": "npm run build",
     "report": "nyc report --reporter=html && opn coverage/index.html"
   },
@@ -27,6 +27,7 @@
     "html5-websocket": "^0.5.0",
     "nyc": "^6.6.1",
     "opn-cli": "^3.1.0",
+    "sinon": "^1.17.4",
     "ws": "^1.1.1"
   },
   "dependencies": {},

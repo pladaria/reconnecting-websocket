@@ -45,7 +45,7 @@ const ReconnectingWebsocket = function(
     let reconnectDelay = 0;
     let retriesCount = 0;
     let shouldRetry = true;
-    const listeners = {};
+    const listeners: any = {};
 
     // require new to construct
     if (!(this instanceof ReconnectingWebsocket)) {
@@ -64,10 +64,31 @@ const ReconnectingWebsocket = function(
 
     const log = config.debug ? (...params) => console.log('RWS:', ...params) : () => {};
 
+    /**
+     * Not using dispatchEvent, otherwise we must use a DOM Event object
+     * Deferred because we want to handle the close event before this
+     */
+    const emitError = (code: string, msg: string) => setTimeout(() => {
+        const err = <any>new Error(msg);
+        err.code = code;
+        if (Array.isArray(listeners.error)) {
+            listeners.error.forEach(([fn]) => fn(err));
+        }
+        if (ws.onerror) {
+            ws.onerror(err);
+        }
+    }, 0);
+
     const connect = () => {
         log('connect');
 
         ws = new (<any>config.constructor)(url, protocols);
+
+        connectingTimeout = setTimeout(() => {
+            log('timeout');
+            ws.close();
+            emitError('ETIMEDOUT', 'Connection timeout');
+        }, config.connectionTimeout);
 
         log('bypass properties');
         for (let key in ws) {
@@ -78,23 +99,25 @@ const ReconnectingWebsocket = function(
         }
 
         ws.addEventListener('open', () => {
+            clearTimeout(connectingTimeout);
             log('open');
             reconnectDelay = initReconnectionDelay(config);
             log('reconnectDelay:', reconnectDelay);
-            // clearTimeout(connectingTimeout);
             retriesCount = 0;
         });
 
         ws.addEventListener('close', () => {
             log('close');
             retriesCount++;
+            log('retries count:', retriesCount);
             if (retriesCount > config.maxRetries) {
-                throw new Error('Too many failed connection attempts')
+                emitError('EHOSTDOWN', 'Too many failed connection attempts');
+                return;
             }
             if (!reconnectDelay) {
-                reconnectDelay = initReconnectionDelay(config)
+                reconnectDelay = initReconnectionDelay(config);
             } else {
-                reconnectDelay = updateReconnectionDelay(config, reconnectDelay)
+                reconnectDelay = updateReconnectionDelay(config, reconnectDelay);
             }
             log('reconnectDelay:', reconnectDelay);
 
