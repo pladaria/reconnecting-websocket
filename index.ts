@@ -1,4 +1,14 @@
-const getDefaultOptions = () => ({
+type Options = {
+    constructor?: typeof WebSocket;
+    maxReconnectionDelay?: number;
+    minReconnectionDelay?: number;
+    reconnectionDelayGrowFactor?: number;
+    connectionTimeout?: number;
+    maxRetries?: number;
+    debug?: boolean;
+};
+
+const getDefaultOptions = () => <Options>({
     constructor: (typeof WebSocket === 'function') ? WebSocket : null,
     maxReconnectionDelay: 10000,
     minReconnectionDelay: 1500,
@@ -17,10 +27,10 @@ const bypassProperty = (src, dst, name: string) => {
     });
 };
 
-const initReconnectionDelay = (config) =>
+const initReconnectionDelay = (config: Options) =>
     (config.minReconnectionDelay + Math.random() * config.minReconnectionDelay);
 
-const updateReconnectionDelay = (config, previousDelay) => {
+const updateReconnectionDelay = (config: Options, previousDelay: number) => {
     let newDelay = previousDelay * config.reconnectionDelayGrowFactor;
     return (newDelay > config.maxReconnectionDelay)
         ? config.maxReconnectionDelay
@@ -43,7 +53,7 @@ const reassignEventListeners = (ws, oldWs, listeners) => {
 const ReconnectingWebsocket = function(
     url: string,
     protocols?: string|string[],
-    options: Object = {}
+    options = <Options>{}
 ) {
     let ws;
     let connectingTimeout;
