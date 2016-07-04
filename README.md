@@ -60,7 +60,7 @@ ws.addEventListener('open', () => {
 
 #### Default options
 
-Options should be self explainatory
+Options should be self explanatory
 
 ```javascript
 const defaultOptions = {
