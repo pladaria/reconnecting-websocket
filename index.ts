@@ -1,5 +1,7 @@
 type Options = {
-    constructor?: typeof WebSocket;
+    constructor?: {
+        new(url: string, protocols?: string | string[]): WebSocket;
+    };
     maxReconnectionDelay?: number;
     minReconnectionDelay?: number;
     reconnectionDelayGrowFactor?: number;
@@ -31,7 +33,7 @@ const initReconnectionDelay = (config: Options) =>
     (config.minReconnectionDelay + Math.random() * config.minReconnectionDelay);
 
 const updateReconnectionDelay = (config: Options, previousDelay: number) => {
-    let newDelay = previousDelay * config.reconnectionDelayGrowFactor;
+    const newDelay = previousDelay * config.reconnectionDelayGrowFactor;
     return (newDelay > config.maxReconnectionDelay)
         ? config.maxReconnectionDelay
         : newDelay;
@@ -39,7 +41,7 @@ const updateReconnectionDelay = (config: Options, previousDelay: number) => {
 
 const LEVEL_0_EVENTS = ['onopen', 'onclose', 'onmessage', 'onerror'];
 
-const reassignEventListeners = (ws, oldWs, listeners) => {
+const reassignEventListeners = (ws: WebSocket, oldWs, listeners) => {
     Object.keys(listeners).forEach(type => {
         listeners[type].forEach(([listener, options]) => {
             ws.addEventListener(type, listener, options);
@@ -55,7 +57,7 @@ const ReconnectingWebsocket = function(
     protocols?: string|string[],
     options = <Options>{}
 ) {
-    let ws;
+    let ws : WebSocket;
     let connectingTimeout;
     let reconnectDelay = 0;
     let retriesCount = 0;
@@ -152,7 +154,7 @@ const ReconnectingWebsocket = function(
         ws.close();
     };
 
-    this.addEventListener = (type: string, listener: Function, options: any) => {
+    this.addEventListener = (type: string, listener: EventListener, options: any) => {
         if (Array.isArray(listeners[type])) {
             if (!listeners[type].some(([l]) => l === listener)) {
                 listeners[type].push([listener, options]);
@@ -163,7 +165,7 @@ const ReconnectingWebsocket = function(
         ws.addEventListener(type, listener, options);
     };
 
-    this.removeEventListener = (type: string, listener: Function, options: any) => {
+    this.removeEventListener = (type: string, listener: EventListener, options: any) => {
         if (Array.isArray(listeners[type])) {
             listeners[type] = listeners[type].filter(([l]) => l !== listener);
         }
