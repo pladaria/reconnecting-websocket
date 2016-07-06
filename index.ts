@@ -57,7 +57,7 @@ const ReconnectingWebsocket = function(
     protocols?: string|string[],
     options = <Options>{}
 ) {
-    let ws : WebSocket;
+    let ws: WebSocket;
     let connectingTimeout;
     let reconnectDelay = 0;
     let retriesCount = 0;
