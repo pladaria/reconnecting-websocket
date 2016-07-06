@@ -1,7 +1,5 @@
 type Options = {
-    constructor?: {
-        new(url: string, protocols?: string | string[]): WebSocket;
-    };
+    constructor?: new(url: string, protocols?: string | string[]) => WebSocket;
     maxReconnectionDelay?: number;
     minReconnectionDelay?: number;
     reconnectionDelayGrowFactor?: number;
