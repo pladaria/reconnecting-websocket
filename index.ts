@@ -8,8 +8,13 @@ type Options = {
     debug?: boolean;
 };
 
+const isGlobalWebSocket = () =>
+    typeof WebSocket !== 'undefined'
+        && WebSocket.prototype
+        && WebSocket.prototype.CLOSING === 2;
+
 const getDefaultOptions = () => <Options>({
-    constructor: (typeof WebSocket === 'function') ? WebSocket : null,
+    constructor: isGlobalWebSocket() ? WebSocket : null,
     maxReconnectionDelay: 10000,
     minReconnectionDelay: 1500,
     reconnectionDelayGrowFactor: 1.3,

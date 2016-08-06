@@ -1,6 +1,11 @@
 "use strict";
+var isGlobalWebSocket = function () {
+    return typeof WebSocket !== 'undefined'
+        && WebSocket.prototype
+        && WebSocket.prototype.CLOSING === 2;
+};
 var getDefaultOptions = function () { return ({
-    constructor: (typeof WebSocket === 'function') ? WebSocket : null,
+    constructor: isGlobalWebSocket() ? WebSocket : null,
     maxReconnectionDelay: 10000,
     minReconnectionDelay: 1500,
     reconnectionDelayGrowFactor: 1.3,
