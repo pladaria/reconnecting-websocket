@@ -152,9 +152,9 @@ const ReconnectingWebsocket = function(
     log('init');
     connect();
 
-    this.close = () => {
-        shouldRetry = false;
-        ws.close();
+    this.close = (code = 1000, reason = '', keepClosed = false) => {
+        shouldRetry = !keepClosed;
+        ws.close(code, reason);
     };
 
     this.addEventListener = (type: string, listener: EventListener, options: any) => {

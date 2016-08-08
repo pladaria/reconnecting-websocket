@@ -64,7 +64,7 @@ Options should be self explanatory
 
 ```javascript
 const defaultOptions = {
-    constructor: (typeof WebSocket === 'function') ? WebSocket : null,
+    constructor: isGlobalWebSocket() ? WebSocket : null,
     maxReconnectionDelay: 10000,
     minReconnectionDelay: 1500,
     reconnectionDelayGrowFactor: 1.3,
@@ -82,6 +82,16 @@ const WebSocket = require('reconnecting-websocket');
 const options = {connectionTimeout: 1000};
 const ws = new WebSocket('ws://my.site.com', null, options);
 ```
+
+#### Manually closing
+
+The `close` function has an additional optional parameter `keepClosed`.
+
+```javascript
+close(code = 1000, reason = '', keepClosed = false)
+```
+
+Use the `keepClosed` parameter to keep the WebSocket closed or automatically reconnect.
 
 #### Using alternative constructor
 

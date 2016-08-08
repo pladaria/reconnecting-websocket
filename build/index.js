@@ -133,9 +133,12 @@ var ReconnectingWebsocket = function (url, protocols, options) {
     };
     log('init');
     connect();
-    this.close = function () {
-        shouldRetry = false;
-        ws.close();
+    this.close = function (code, reason, keepClosed) {
+        if (code === void 0) { code = 1000; }
+        if (reason === void 0) { reason = ''; }
+        if (keepClosed === void 0) { keepClosed = false; }
+        shouldRetry = !keepClosed;
+        ws.close(code, reason);
     };
     this.addEventListener = function (type, listener, options) {
         if (Array.isArray(listeners[type])) {
