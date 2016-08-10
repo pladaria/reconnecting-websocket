@@ -199,6 +199,48 @@ test.cb('connect, send, receive, close', t => {
     });
 });
 
+test.cb('close and keepClosed', t => {
+    const anyMessageText = 'hello';
+    const anyProtocol = 'foobar';
+    const maxRetries = 3;
+
+    let timesOpened = 0;
+    const wss = new WebSocketServer({port: PORT});
+    wss.on('connection', ws => {
+        ws.on('close', (event) => {
+            if (timesOpened === maxRetries) {
+                setTimeout(() => {
+                    wss.close();
+                    t.end();
+                }, 100);
+            }
+            if (timesOpened > maxRetries) {
+                t.fail('closed too many times');
+            }
+        });
+    });
+
+    const ws = new WebSocket(wsUrl, anyProtocol, {
+        constructor: Html5Websocket,
+        maxReconnectionDelay: 0,
+        minReconnectionDelay: 0,
+    });
+    t.is(ws.readyState, ws.CONNECTING);
+    t.is(ws.protocol, anyProtocol);
+
+    ws.addEventListener('open', () => {
+        timesOpened++;
+        t.is(ws.readyState, ws.OPEN, timesOpened);
+        const keepClosed = timesOpened >= maxRetries;
+        ws.close(1000, 'closed', keepClosed);
+    });
+
+    ws.addEventListener('close', () => {
+        t.is(ws.readyState, ws.CLOSED);
+        t.is(ws.url, wsUrl);
+    });
+});
+
 test.cb('debug mode logs stuff', t => {
     const savedLog = console.log;
     let callsCount = 0;
