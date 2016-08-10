@@ -1,8 +1,12 @@
 "use strict";
+var isWebSocket = function (constructor) {
+    return constructor
+        && constructor.prototype
+        && constructor.prototype.CLOSING === 2;
+};
 var isGlobalWebSocket = function () {
     return typeof WebSocket !== 'undefined'
-        && WebSocket.prototype
-        && WebSocket.prototype.CLOSING === 2;
+        && isWebSocket(WebSocket);
 };
 var getDefaultOptions = function () { return ({
     constructor: isGlobalWebSocket() ? WebSocket : null,
@@ -60,7 +64,7 @@ var ReconnectingWebsocket = function (url, protocols, options) {
     Object.keys(config)
         .filter(function (key) { return options.hasOwnProperty(key); })
         .forEach(function (key) { return config[key] = options[key]; });
-    if (typeof config.constructor !== 'function') {
+    if (!isWebSocket(config.constructor)) {
         throw new TypeError('WebSocket constructor not set. Set `options.constructor`');
     }
     var log = config.debug ? function () {
