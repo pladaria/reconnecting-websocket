@@ -108,7 +108,7 @@ const ReconnectingWebsocket = function(
         log('bypass properties');
         for (let key in ws) {
             // @todo move to constant
-            if (['addEventListener', 'removeEventListener', 'close'].indexOf(key) < 0) {
+            if (['addEventListener', 'removeEventListener', 'close', 'send'].indexOf(key) < 0) {
                 bypassProperty(ws, this, key);
             }
         }
@@ -150,6 +150,10 @@ const ReconnectingWebsocket = function(
     this.close = () => {
         shouldRetry = false;
         ws.close();
+    };
+
+    this.send = (data) => {
+        ws.send(data)
     };
 
     this.addEventListener = (type: string, listener: EventListener, options: any) => {
