@@ -8,7 +8,8 @@
     "build": "tsc",
     "test": "nyc ava --verbose --serial test/test.js",
     "pretest": "npm run build",
-    "report": "nyc report --reporter=html && opn coverage/index.html"
+    "report": "nyc report --reporter=html && opn coverage/index.html",
+    "prepublish": "npm test"
   },
   "keywords": [
     "websocket",
