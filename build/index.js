@@ -99,7 +99,7 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         log('bypass properties');
         for (var key in ws) {
             // @todo move to constant
-            if (['addEventListener', 'removeEventListener', 'close'].indexOf(key) < 0) {
+            if (['addEventListener', 'removeEventListener', 'close', 'send'].indexOf(key) < 0) {
                 bypassProperty(ws, _this, key);
             }
         }
@@ -139,6 +139,9 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         if (keepClosed === void 0) { keepClosed = false; }
         shouldRetry = !keepClosed;
         ws.close(code, reason);
+    };
+    this.send = function (data) {
+        ws.send(data);
     };
     this.addEventListener = function (type, listener, options) {
         if (Array.isArray(listeners[type])) {
