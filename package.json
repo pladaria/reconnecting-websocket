@@ -1,6 +1,6 @@
 {
   "name": "reconnecting-websocket",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "Reconnecting WebSocket",
   "main": "build/index.js",
   "typings": "build/index.d.ts",
