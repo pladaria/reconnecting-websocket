@@ -9,13 +9,10 @@ type Options = {
 };
 
 const isWebSocket = constructor =>
-    constructor
-        && constructor.prototype
-        && constructor.prototype.CLOSING === 2;
+    constructor && constructor.CLOSING === 2;
 
 const isGlobalWebSocket = () =>
-    typeof WebSocket !== 'undefined'
-        && isWebSocket(WebSocket);
+    typeof WebSocket !== 'undefined' && isWebSocket(WebSocket);
 
 const getDefaultOptions = () => <Options>({
     constructor: isGlobalWebSocket() ? WebSocket : null,
@@ -83,7 +80,7 @@ const ReconnectingWebsocket = function(
         .forEach(key => config[key] = options[key]);
 
     if (!isWebSocket(config.constructor)) {
-        throw new TypeError('WebSocket constructor not set. Set `options.constructor`');
+        throw new TypeError('Invalid WebSocket constructor. Set `options.constructor`');
     }
 
     const log = config.debug ? (...params) => console.log('RWS:', ...params) : () => {};

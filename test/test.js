@@ -2,8 +2,8 @@ const Html5Websocket = require('html5-websocket');
 const WebSocketServer = require('ws').Server;
 const WebSocket = require('..');
 const test = require('ava');
-const PORT = 50000;
-const PORT_UNRESPONSIVE = 50001;
+const PORT = 50123;
+const PORT_UNRESPONSIVE = 50124;
 const wsUrl = `ws://localhost:${PORT}`;
 
 test('throws with invalid constructor', t => {
