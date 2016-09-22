@@ -92,7 +92,7 @@ close(code = 1000, reason = '', {keepClosed: boolean, delay: number})
 ```
 
 - Use the `keepClosed` option to keep the WebSocket closed or automatically reconnect (default `false`).
-- Use the `delay` options to set the initial delay for the next connection retry (ignored if `0`).
+- Use the `delay` option to set the initial delay for the next connection retry (ignored if `0`).
 
 #### Using alternative constructor
 
