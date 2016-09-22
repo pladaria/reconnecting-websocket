@@ -232,7 +232,7 @@ test.cb('close and keepClosed', t => {
         timesOpened++;
         t.is(ws.readyState, ws.OPEN, timesOpened);
         const keepClosed = timesOpened >= maxRetries;
-        ws.close(1000, 'closed', keepClosed);
+        ws.close(1000, 'closed', {keepClosed, delay: 1});
     });
 
     ws.addEventListener('close', () => {
