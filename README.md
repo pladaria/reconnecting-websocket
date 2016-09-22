@@ -85,13 +85,14 @@ const ws = new WebSocket('ws://my.site.com', null, options);
 
 #### Manually closing
 
-The `close` function has an additional optional parameter `keepClosed`.
+The `close` function has an additional options parameter
 
 ```javascript
-close(code = 1000, reason = '', keepClosed = false)
+close(code = 1000, reason = '', {keepClosed: boolean, delay: number})
 ```
 
-Use the `keepClosed` parameter to keep the WebSocket closed or automatically reconnect.
+- Use the `keepClosed` option to keep the WebSocket closed or automatically reconnect (default `false`).
+- Use the `delay` options to set the initial delay for the next connection retry (ignored if `0`).
 
 #### Using alternative constructor
 
