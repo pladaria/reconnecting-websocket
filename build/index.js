@@ -134,10 +134,13 @@ var ReconnectingWebsocket = function (url, protocols, options) {
     };
     log('init');
     connect();
-    this.close = function (code, reason, keepClosed) {
+    this.close = function (code, reason, _a) {
         if (code === void 0) { code = 1000; }
         if (reason === void 0) { reason = ''; }
-        if (keepClosed === void 0) { keepClosed = false; }
+        var _b = _a === void 0 ? {} : _a, _c = _b.keepClosed, keepClosed = _c === void 0 ? false : _c, _d = _b.delay, delay = _d === void 0 ? 0 : _d;
+        if (delay) {
+            reconnectDelay = delay;
+        }
         shouldRetry = !keepClosed;
         ws.close(code, reason);
     };

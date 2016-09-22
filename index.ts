@@ -153,7 +153,10 @@ const ReconnectingWebsocket = function(
     log('init');
     connect();
 
-    this.close = (code = 1000, reason = '', keepClosed = false) => {
+    this.close = (code = 1000, reason = '', {keepClosed = false, delay = 0} = {}) => {
+        if (delay) {
+            reconnectDelay = delay;
+        }
         shouldRetry = !keepClosed;
         ws.close(code, reason);
     };
