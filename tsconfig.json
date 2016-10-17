@@ -4,11 +4,11 @@
         "target": "es5",
         "noImplicitAny": false,
         "sourceMap": false,
-        "outDir": "build",
+        "outDir": "dist",
         "declaration": true
     },
     "exclude": [
         "node_modules",
-        "build"
+        "dist"
     ]
 }

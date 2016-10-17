@@ -2,12 +2,13 @@
   "name": "reconnecting-websocket",
   "version": "2.0.0",
   "description": "Reconnecting WebSocket",
-  "main": "build/index.js",
-  "typings": "build/index.d.ts",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "nyc ava --verbose --serial test/test.js",
     "pretest": "npm run build",
+    "test": "nyc ava --verbose --serial test/test.js",
+    "prebuild": "rimraf dist",
     "report": "nyc report --reporter=html && opn coverage/index.html",
     "prepublish": "npm test"
   },
@@ -29,6 +30,7 @@
     "html5-websocket": "^1.0.0",
     "nyc": "^6.6.1",
     "opn-cli": "^3.1.0",
+    "rimraf": "^2.5.4",
     "typescript": "1.8.10",
     "ws": "^1.1.1"
   },
@@ -42,6 +44,9 @@
   },
   "bugs": {
     "url": "https://github.com/pladaria/reconnecting-websocket/issues"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
   },
   "homepage": "https://github.com/pladaria/reconnecting-websocket#readme"
 }
