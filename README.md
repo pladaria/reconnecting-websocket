@@ -14,6 +14,7 @@ WebSocket that will automatically reconnect if the connection is closed.
 - Handle connection timeouts
 - Full test coverage
 - Debug mode
+- Fast close (new in version 3).
 
 ## Install
 
@@ -88,10 +89,11 @@ const ws = new WebSocket('ws://my.site.com', null, options);
 The `close` function has an additional options parameter
 
 ```javascript
-close(code = 1000, reason = '', {keepClosed: boolean, delay: number})
+close(code = 1000, reason = '', {keepClosed: boolean, fastClose: boolean, delay: number})
 ```
 
 - Use the `keepClosed` option to keep the WebSocket closed or automatically reconnect (default `false`).
+- If `fastClose` option is `true`, all close listeners are executed as soon as the close() method is called, otherwise it waits until the websocket closing protocol finishes, this can be a long time if there's no connection (default `true`). Keep in mind that with this option, it may happen that the close event is fired with a ready state of `CLOSING`.
 - Use the `delay` option to set the initial delay for the next connection retry (ignored if `0`).
 
 #### Using alternative constructor
