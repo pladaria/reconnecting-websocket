@@ -165,7 +165,7 @@ test.cb('connection timeout', t => {
     });
 });
 
-test.cb('connect, send, receive, close', t => {
+test.cb('connect, send, receive, close {fastClose: false}', t => {
     const anyMessageText = 'hello';
     const anyProtocol = 'foobar';
 
@@ -187,7 +187,7 @@ test.cb('connect, send, receive, close', t => {
 
     ws.addEventListener('message', msg => {
         t.is(msg.data, anyMessageText);
-        ws.close();
+        ws.close(1000, '', {fastClose: false, keepClosed: true});
         wss.close();
         t.is(ws.readyState, ws.CLOSING);
     });
@@ -197,6 +197,50 @@ test.cb('connect, send, receive, close', t => {
         t.is(ws.url, wsUrl);
         t.end();
     });
+});
+
+test.cb('connect, send, receive, close {fastClose: true}', t => {
+    const anyMessageText = 'hello';
+    const anyProtocol = 'foobar';
+    const closeCode = 1000;
+    const closeReason = 'normal';
+
+    const wss = new WebSocketServer({port: PORT});
+    wss.on('connection', ws => {
+        ws.on('message', msg => {
+            ws.send(msg);
+        });
+    });
+
+    const ws = new WebSocket(wsUrl, anyProtocol, {constructor: Html5Websocket});
+
+    t.plan(9);
+
+    t.is(ws.readyState, ws.CONNECTING);
+    t.is(ws.protocol, anyProtocol);
+
+    ws.addEventListener('open', () => {
+        t.is(ws.readyState, ws.OPEN);
+        ws.send(anyMessageText);
+    });
+
+    ws.addEventListener('message', msg => {
+        t.is(msg.data, anyMessageText);
+        ws.close(closeCode, closeReason, {fastClose: true, keepClosed: true});
+        wss.close();
+    });
+
+    ws.addEventListener('close', () => {
+        t.is(ws.readyState, ws.CLOSING);
+        t.is(ws.url, wsUrl);
+    });
+
+    ws.onclose = (event) => {
+        t.is(ws.readyState, ws.CLOSING);
+        t.is(event.code, closeCode);
+        t.is(event.reason, closeReason);
+        t.end();
+    };
 });
 
 test.cb('close and keepClosed', t => {
@@ -232,7 +276,7 @@ test.cb('close and keepClosed', t => {
         timesOpened++;
         t.is(ws.readyState, ws.OPEN, timesOpened);
         const keepClosed = timesOpened >= maxRetries;
-        ws.close(1000, 'closed', {keepClosed, delay: 1});
+        ws.close(1000, 'closed', {keepClosed, delay: 1, fastClose: false});
     });
 
     ws.addEventListener('close', () => {

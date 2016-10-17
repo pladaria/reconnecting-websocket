@@ -1,3 +1,12 @@
+/*
+Ready state constants
+https://developer.mozilla.org/en-US/docs/Web/API/WebSocket#Ready_state_constants
+
+CONNECTING 0 The connection is not yet open.
+OPEN       1 The connection is open and ready to communicate.
+CLOSING    2 The connection is in the process of closing.
+CLOSED     3 The connection is closed or couldn't be opened.
+*/
 type Options = {
     constructor?: new(url: string, protocols?: string | string[]) => WebSocket;
     maxReconnectionDelay?: number;
@@ -100,6 +109,26 @@ const ReconnectingWebsocket = function(
         }
     }, 0);
 
+    const handleClose = () => {
+        log('close');
+        retriesCount++;
+        log('retries count:', retriesCount);
+        if (retriesCount > config.maxRetries) {
+            emitError('EHOSTDOWN', 'Too many failed connection attempts');
+            return;
+        }
+        if (!reconnectDelay) {
+            reconnectDelay = initReconnectionDelay(config);
+        } else {
+            reconnectDelay = updateReconnectionDelay(config, reconnectDelay);
+        }
+        log('reconnectDelay:', reconnectDelay);
+
+        if (shouldRetry) {
+            setTimeout(connect, reconnectDelay);
+        }
+    };
+
     const connect = () => {
         log('connect');
         const oldWs = ws;
@@ -127,25 +156,7 @@ const ReconnectingWebsocket = function(
             retriesCount = 0;
         });
 
-        ws.addEventListener('close', () => {
-            log('close');
-            retriesCount++;
-            log('retries count:', retriesCount);
-            if (retriesCount > config.maxRetries) {
-                emitError('EHOSTDOWN', 'Too many failed connection attempts');
-                return;
-            }
-            if (!reconnectDelay) {
-                reconnectDelay = initReconnectionDelay(config);
-            } else {
-                reconnectDelay = updateReconnectionDelay(config, reconnectDelay);
-            }
-            log('reconnectDelay:', reconnectDelay);
-
-            if (shouldRetry) {
-                setTimeout(connect, reconnectDelay);
-            }
-        });
+        ws.addEventListener('close', handleClose);
 
         reassignEventListeners(ws, oldWs, listeners);
     };
@@ -153,12 +164,39 @@ const ReconnectingWebsocket = function(
     log('init');
     connect();
 
-    this.close = (code = 1000, reason = '', {keepClosed = false, delay = 0} = {}) => {
+    this.close = (code = 1000, reason = '', {keepClosed = false, fastClose = true, delay = 0} = {}) => {
         if (delay) {
             reconnectDelay = delay;
         }
         shouldRetry = !keepClosed;
+
         ws.close(code, reason);
+
+        if (fastClose) {
+            const fakeCloseEvent = <CloseEvent>{
+                code,
+                reason,
+                wasClean: true,
+            };
+
+            // execute close listeners soon with a fake closeEvent
+            // and remove all close listeners from the WS instance
+            // so they don't get fired on the real close.
+
+            handleClose();
+
+            if (Array.isArray(listeners.close)) {
+                listeners.close.forEach(([listener, options]) => {
+                    listener(fakeCloseEvent);
+                    ws.removeEventListener('close', listener, options);
+                });
+            }
+
+            if (ws.onclose) {
+                ws.onclose(fakeCloseEvent);
+                ws.onclose = null;
+            }
+        }
     };
 
     this.send = (data) => {
