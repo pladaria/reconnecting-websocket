@@ -167,7 +167,7 @@ var ReconnectingWebsocket = function (url, protocols, options) {
                     ws.removeEventListener('close', listener, options);
                 });
             }
-            // remove level0
+            // run and remove level0
             if (ws.onclose) {
                 savedOnClose = ws.onclose;
                 ws.onclose(fakeCloseEvent_1);
