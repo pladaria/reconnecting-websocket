@@ -94,6 +94,56 @@ test.cb('level0 event listeners are reassigned after reconnect', t => {
     ws.onerror = handleError;
 });
 
+test.cb('level0 event listeners are reassigned after closing with fastClose', t => {
+    const rounds = 4;
+    const wss = new WebSocketServer({port: PORT});
+    const clientMsg = 'hello';
+    const serverMsg = 'bye';
+
+    t.plan(rounds * 7);
+
+    wss.on('connection', ws => {
+        ws.on('message', msg => {
+            t.is(msg, clientMsg);
+            ws.send(serverMsg);
+        });
+    });
+
+    const ws = new WebSocket(wsUrl, null, {
+        constructor: Html5Websocket,
+        reconnectionDelayFactor: 1.2,
+        maxReconnectionDelay: 20,
+        minReconnectionDelay: 10,
+    });
+
+    let count = 0;
+    const handleOpen = () => {
+        ws.send(clientMsg);
+        count++;
+    };
+    const handleMessage = (msg) => {
+        t.is(msg.data, serverMsg);
+        ws.close(1000, String(count), {keepClosed: count === rounds, fastClose: true});
+        if (count === rounds) {
+            wss.close();
+            setTimeout(() => t.end(), 100);
+        }
+    };
+    const handleClose = (event) => {
+        t.is(ws.readyState, ws.CLOSING);
+        t.is(ws.onopen, handleOpen);
+        t.is(ws.onclose, handleClose);
+        t.is(ws.onmessage, handleMessage);
+        t.is(ws.onerror, handleError);
+    };
+    const handleError = () => {};
+
+    ws.onopen = handleOpen;
+    ws.onclose = handleClose;
+    ws.onmessage = handleMessage;
+    ws.onerror = handleError;
+});
+
 test.cb('level2 event listeners (addEventListener, removeEventListener)', t => {
     const ws = new WebSocket(wsUrl, null, {
         constructor: Html5Websocket,

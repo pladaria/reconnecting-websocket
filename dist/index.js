@@ -51,6 +51,7 @@ var ReconnectingWebsocket = function (url, protocols, options) {
     var reconnectDelay = 0;
     var retriesCount = 0;
     var shouldRetry = true;
+    var savedOnClose = null;
     var listeners = {};
     // require new to construct
     if (!(this instanceof ReconnectingWebsocket)) {
@@ -132,6 +133,9 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         });
         ws.addEventListener('close', handleClose);
         reassignEventListeners(ws, oldWs, listeners);
+        // because when closing with fastClose=true, it is saved and set to null to avoid double calls
+        ws.onclose = ws.onclose || savedOnClose;
+        savedOnClose = null;
     };
     log('init');
     connect();
@@ -151,9 +155,11 @@ var ReconnectingWebsocket = function (url, protocols, options) {
                 wasClean: true,
             };
             // execute close listeners soon with a fake closeEvent
-            // and remove all close listeners from the WS instance
-            // so they don't get fired on the real close.
+            // and remove them from the WS instance so they
+            // don't get fired on the real close.
             handleClose();
+            ws.removeEventListener('close', handleClose);
+            // run and remove level2
             if (Array.isArray(listeners.close)) {
                 listeners.close.forEach(function (_a) {
                     var listener = _a[0], options = _a[1];
@@ -161,7 +167,9 @@ var ReconnectingWebsocket = function (url, protocols, options) {
                     ws.removeEventListener('close', listener, options);
                 });
             }
+            // remove level0
             if (ws.onclose) {
+                savedOnClose = ws.onclose;
                 ws.onclose(fakeCloseEvent_1);
                 ws.onclose = null;
             }

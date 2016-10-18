@@ -45,7 +45,7 @@ const updateReconnectionDelay = (config: Options, previousDelay: number) => {
 
 const LEVEL_0_EVENTS = ['onopen', 'onclose', 'onmessage', 'onerror'];
 
-const reassignEventListeners = (ws: WebSocket, oldWs, listeners) => {
+const reassignEventListeners = (ws: WebSocket, oldWs: WebSocket, listeners) => {
     Object.keys(listeners).forEach(type => {
         listeners[type].forEach(([listener, options]) => {
             ws.addEventListener(type, listener, options);
@@ -66,6 +66,7 @@ const ReconnectingWebsocket = function(
     let reconnectDelay = 0;
     let retriesCount = 0;
     let shouldRetry = true;
+    let savedOnClose = null;
     const listeners: any = {};
 
     // require new to construct
@@ -150,6 +151,10 @@ const ReconnectingWebsocket = function(
         ws.addEventListener('close', handleClose);
 
         reassignEventListeners(ws, oldWs, listeners);
+
+        // because when closing with fastClose=true, it is saved and set to null to avoid double calls
+        ws.onclose = ws.onclose || savedOnClose;
+        savedOnClose = null;
     };
 
     log('init');
@@ -171,19 +176,20 @@ const ReconnectingWebsocket = function(
             };
 
             // execute close listeners soon with a fake closeEvent
-            // and remove all close listeners from the WS instance
-            // so they don't get fired on the real close.
-
+            // and remove them from the WS instance so they
+            // don't get fired on the real close.
             handleClose();
-
+            ws.removeEventListener('close', handleClose);
+            // run and remove level2
             if (Array.isArray(listeners.close)) {
                 listeners.close.forEach(([listener, options]) => {
                     listener(fakeCloseEvent);
                     ws.removeEventListener('close', listener, options);
                 });
             }
-
+            // remove level0
             if (ws.onclose) {
+                savedOnClose = ws.onclose;
                 ws.onclose(fakeCloseEvent);
                 ws.onclose = null;
             }
