@@ -81,7 +81,7 @@ const defaultOptions = {
 const WebSocket = require('reconnecting-websocket');
 
 const options = {connectionTimeout: 1000};
-const ws = new WebSocket('ws://my.site.com', null, options);
+const ws = new WebSocket('ws://my.site.com', [], options);
 ```
 
 #### Manually closing
@@ -95,6 +95,17 @@ close(code = 1000, reason = '', {keepClosed: boolean, fastClose: boolean, delay:
 - Use the `keepClosed` option to keep the WebSocket closed or automatically reconnect (default `false`).
 - If `fastClose` option is `true`, all close listeners are executed as soon as the close() method is called, otherwise it waits until the websocket closing protocol finishes, this can be a long time if there's no connection (default `true`). Keep in mind that with this option, it may happen that the close event is fired with a ready state of `CLOSING`.
 - Use the `delay` option to set the initial delay for the next connection retry (ignored if `0`).
+
+#### Setting WebSocket options
+
+If you set any attributes of WebSocket itself, such as `binaryType`, make sure to set them again after each reconnection, i.e. on the `open` event:
+
+```javascript
+ws.addEventListener('open', () => {
+    ws.binaryType = 'arraybuffer';
+    ws.send('i am ready to receive some data!');
+});
+```
 
 #### Using alternative constructor
 
