@@ -10,7 +10,7 @@ WebSocket that will automatically reconnect if the connection is closed.
 - Multiplatform (Web, ServiceWorkers, Node.js, React Native)
 - Dependency free (does not depends on Window, DOM or any EventEmitter library)
 - Reassign event listeners when a new WebSocket instance is created
-- Automatic reconnection using rfc6455 guidelines
+- Automatic reconnection using [rfc6455](https://tools.ietf.org/html/rfc6455#section-7.2.3) guidelines
 - Handle connection timeouts
 - Full test coverage
 - Debug mode
