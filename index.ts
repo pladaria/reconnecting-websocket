@@ -122,6 +122,10 @@ const ReconnectingWebsocket = function(
     };
 
     const connect = () => {
+        if (!shouldRetry) {
+            return;
+        }
+
         log('connect');
         const oldWs = ws;
         ws = new (<any>config.constructor)(url, protocols);
