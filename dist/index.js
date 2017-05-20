@@ -12,14 +12,14 @@ var getDefaultOptions = function () { return ({
     reconnectionDelayGrowFactor: 1.3,
     connectionTimeout: 4000,
     maxRetries: Infinity,
-    debug: false,
+    debug: false
 }); };
 var bypassProperty = function (src, dst, name) {
     Object.defineProperty(dst, name, {
         get: function () { return src[name]; },
         set: function (value) { src[name] = value; },
         enumerable: true,
-        configurable: true,
+        configurable: true
     });
 };
 var initReconnectionDelay = function (config) {
@@ -155,7 +155,7 @@ var ReconnectingWebsocket = function (url, protocols, options) {
             var fakeCloseEvent_1 = {
                 code: code,
                 reason: reason,
-                wasClean: true,
+                wasClean: true
             };
             // execute close listeners soon with a fake closeEvent
             // and remove them from the WS instance so they

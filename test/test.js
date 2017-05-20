@@ -249,6 +249,7 @@ test.cb('connect, send, receive, close {fastClose: false}', t => {
     ws.addEventListener('close', () => {
         t.is(ws.readyState, ws.CLOSED);
         t.is(ws.url, url);
+        wss.close();
         t.end();
     });
 });
