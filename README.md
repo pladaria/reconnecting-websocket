@@ -14,7 +14,8 @@ WebSocket that will automatically reconnect if the connection is closed.
 - Handle connection timeouts
 - Full test coverage
 - Debug mode
-- Fast close (new in version 3).
+- Fast close (new in version 3)
+- AMD build available (see dist folder)
 
 ## Install
 
