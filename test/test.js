@@ -1,28 +1,28 @@
-const Html5Websocket = require('html5-websocket');
-const WebSocketServer = require('ws').Server;
-const WebSocket = require('..');
+const HWS = require('html5-websocket');
+const WSS = require('ws').Server;
+const RWS = require('..');
 const test = require('ava');
 const PORT = 50123;
 const PORT_UNRESPONSIVE = 50124;
-const wsUrl = `ws://localhost:${PORT}`;
+const url = `ws://localhost:${PORT}`;
 
 test('throws with invalid constructor', t => {
     t.throws(() => {
-        new WebSocket(wsUrl, null);
+        new RWS(url, null);
     }, TypeError);
 });
 
 test('throws if not created with `new`', t => {
     t.throws(() => {
-        WebSocket(wsUrl, null, {constructor: Html5Websocket});
+        RWS(url, null, {constructor: HWS});
     }, TypeError);
 });
 
 test.cb('global WebSocket is used if available', t => {
     t.plan(1);
     const saved = global.WebSocket;
-    global.WebSocket = Html5Websocket;
-    const ws = new WebSocket(wsUrl, null, {maxRetries: 0});
+    global.WebSocket = HWS;
+    const ws = new RWS(url, null, {maxRetries: 0});
     ws.onerror = err => {
         if (err.code === 'EHOSTDOWN') {
             t.pass('WebSocket created');
@@ -33,7 +33,7 @@ test.cb('global WebSocket is used if available', t => {
 });
 
 test('connection status constants', t => {
-    const ws = new WebSocket(wsUrl, null, {constructor: Html5Websocket});
+    const ws = new RWS(url, null, {constructor: HWS});
     t.is(ws.CONNECTING, 0);
     t.is(ws.OPEN, 1);
     t.is(ws.CLOSING, 2);
@@ -42,8 +42,8 @@ test('connection status constants', t => {
 });
 
 test.cb('max retries', t => {
-    const ws = new WebSocket(wsUrl, null, {
-        constructor: Html5Websocket,
+    const ws = new RWS(url, null, {
+        constructor: HWS,
         maxRetries: 2,
         reconnectionDelayFactor: 0,
         maxReconnectionDelay: 0,
@@ -64,8 +64,8 @@ test.cb('max retries', t => {
 });
 
 test.cb('level0 event listeners are reassigned after reconnect', t => {
-    const ws = new WebSocket(wsUrl, null, {
-        constructor: Html5Websocket,
+    const ws = new RWS(url, null, {
+        constructor: HWS,
         maxRetries: 4,
         reconnectionDelayFactor: 1.2,
         maxReconnectionDelay: 20,
@@ -96,7 +96,7 @@ test.cb('level0 event listeners are reassigned after reconnect', t => {
 
 test.cb('level0 event listeners are reassigned after closing with fastClose', t => {
     const rounds = 4;
-    const wss = new WebSocketServer({port: PORT});
+    const wss = new WSS({port: PORT});
     const clientMsg = 'hello';
     const serverMsg = 'bye';
 
@@ -109,8 +109,8 @@ test.cb('level0 event listeners are reassigned after closing with fastClose', t 
         });
     });
 
-    const ws = new WebSocket(wsUrl, null, {
-        constructor: Html5Websocket,
+    const ws = new RWS(url, null, {
+        constructor: HWS,
         reconnectionDelayFactor: 1.2,
         maxReconnectionDelay: 20,
         minReconnectionDelay: 10,
@@ -129,7 +129,7 @@ test.cb('level0 event listeners are reassigned after closing with fastClose', t 
             setTimeout(() => t.end(), 100);
         }
     };
-    const handleClose = (event) => {
+    const handleClose = () => {
         t.is(ws.readyState, ws.CLOSING);
         t.is(ws.onopen, handleOpen);
         t.is(ws.onclose, handleClose);
@@ -145,8 +145,8 @@ test.cb('level0 event listeners are reassigned after closing with fastClose', t 
 });
 
 test.cb('level2 event listeners (addEventListener, removeEventListener)', t => {
-    const ws = new WebSocket(wsUrl, null, {
-        constructor: Html5Websocket,
+    const ws = new RWS(url, null, {
+        constructor: HWS,
         maxRetries: 3,
         reconnectionDelayFactor: 1.2,
         maxReconnectionDelay: 60,
@@ -189,12 +189,16 @@ test.cb('level2 event listeners (addEventListener, removeEventListener)', t => {
 });
 
 test.cb('connection timeout', t => {
-    const exec = require('child_process').exec;
-    const proc = exec(`node unresponsive-server.js ${PORT_UNRESPONSIVE}`);
+    const spawn = require('child_process').spawn;
+    const proc = spawn('node', [`${__dirname}/unresponsive-server.js`, String(PORT_UNRESPONSIVE)]);
+
+    proc.stderr.on('data', (data) => {
+        t.fail(data.toString());
+    });
 
     proc.stdout.on('data', () => {
-        const ws = new WebSocket(`ws://localhost:${PORT_UNRESPONSIVE}`, null, {
-            constructor: Html5Websocket,
+        const ws = new RWS(`ws://localhost:${PORT_UNRESPONSIVE}`, null, {
+            constructor: HWS,
             connectionTimeout: 200,
             maxRetries: 0,
         });
@@ -219,14 +223,14 @@ test.cb('connect, send, receive, close {fastClose: false}', t => {
     const anyMessageText = 'hello';
     const anyProtocol = 'foobar';
 
-    const wss = new WebSocketServer({port: PORT});
+    const wss = new WSS({port: PORT});
     wss.on('connection', ws => {
         ws.on('message', msg => {
             ws.send(msg);
         });
     });
 
-    const ws = new WebSocket(wsUrl, anyProtocol, {constructor: Html5Websocket});
+    const ws = new RWS(url, anyProtocol, {constructor: HWS});
     t.is(ws.readyState, ws.CONNECTING);
     t.is(ws.protocol, anyProtocol);
 
@@ -244,7 +248,7 @@ test.cb('connect, send, receive, close {fastClose: false}', t => {
 
     ws.addEventListener('close', () => {
         t.is(ws.readyState, ws.CLOSED);
-        t.is(ws.url, wsUrl);
+        t.is(ws.url, url);
         t.end();
     });
 });
@@ -255,14 +259,14 @@ test.cb('connect, send, receive, close {fastClose: true}', t => {
     const closeCode = 1000;
     const closeReason = 'normal';
 
-    const wss = new WebSocketServer({port: PORT});
+    const wss = new WSS({port: PORT});
     wss.on('connection', ws => {
         ws.on('message', msg => {
             ws.send(msg);
         });
     });
 
-    const ws = new WebSocket(wsUrl, anyProtocol, {constructor: Html5Websocket});
+    const ws = new RWS(url, anyProtocol, {constructor: HWS});
 
     t.plan(9);
 
@@ -282,7 +286,7 @@ test.cb('connect, send, receive, close {fastClose: true}', t => {
 
     ws.addEventListener('close', () => {
         t.is(ws.readyState, ws.CLOSING);
-        t.is(ws.url, wsUrl);
+        t.is(ws.url, url);
     });
 
     ws.onclose = (event) => {
@@ -294,14 +298,13 @@ test.cb('connect, send, receive, close {fastClose: true}', t => {
 });
 
 test.cb('close and keepClosed', t => {
-    const anyMessageText = 'hello';
     const anyProtocol = 'foobar';
     const maxRetries = 3;
 
     let timesOpened = 0;
-    const wss = new WebSocketServer({port: PORT});
+    const wss = new WSS({port: PORT});
     wss.on('connection', ws => {
-        ws.on('close', (event) => {
+        ws.on('close', () => {
             if (timesOpened === maxRetries) {
                 setTimeout(() => {
                     wss.close();
@@ -314,8 +317,8 @@ test.cb('close and keepClosed', t => {
         });
     });
 
-    const ws = new WebSocket(wsUrl, anyProtocol, {
-        constructor: Html5Websocket,
+    const ws = new RWS(url, anyProtocol, {
+        constructor: HWS,
         maxReconnectionDelay: 0,
         minReconnectionDelay: 0,
     });
@@ -331,18 +334,18 @@ test.cb('close and keepClosed', t => {
 
     ws.addEventListener('close', () => {
         t.is(ws.readyState, ws.CLOSED);
-        t.is(ws.url, wsUrl);
+        t.is(ws.url, url);
     });
 });
 
 test.cb('debug mode logs stuff', t => {
-    const savedLog = console.log;
+    const savedLog = global.console.log;
     let callsCount = 0;
-    console.log = () => {
+    global.console.log = () => {
         callsCount++;
     };
-    const ws = new WebSocket(wsUrl, null, {
-        constructor: Html5Websocket,
+    const ws = new RWS(url, null, {
+        constructor: HWS,
         maxRetries: 0,
         debug: true,
     });
@@ -350,7 +353,41 @@ test.cb('debug mode logs stuff', t => {
         if (err.code === 'EHOSTDOWN') {
             t.true(callsCount > 0, `calls to console.log: ${callsCount}`);
             t.end();
-            console.log = savedLog;
+            global.console.log = savedLog;
         }
     };
+});
+
+test.cb('#14 fix - closing with keepClose before open', t => {
+    const wss = new WSS({port: PORT});
+    let connectionsCount = 0;
+
+    wss.on('connection', ws => {
+        connectionsCount++;
+        if (connectionsCount > 1) {
+            t.fail('only one connection was expected');
+            wss.close();
+        }
+        ws.close(4000);
+    });
+
+    const ws = new RWS(url, null, {
+        constructor: HWS,
+        maxReconnectionDelay: 200,
+        minReconnectionDelay: 200,
+        reconnectionDelayGrowFactor: 1,
+    });
+
+    const closeHandler = () => {
+        ws.removeEventListener('close', closeHandler);
+        ws.close(4000, undefined, {keepClosed: true, fastClose: true});
+    };
+
+    ws.addEventListener('close', closeHandler);
+
+    setTimeout(() => {
+        t.pass('no new connections after delay');
+        wss.close();
+        t.end();
+    }, 1000);
 });
