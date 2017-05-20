@@ -109,6 +109,9 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         }
     };
     var connect = function () {
+        if (!shouldRetry) {
+            return;
+        }
         log('connect');
         var oldWs = ws;
         ws = new config.constructor(url, protocols);
