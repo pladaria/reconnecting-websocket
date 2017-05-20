@@ -5,10 +5,12 @@
         "noImplicitAny": false,
         "sourceMap": false,
         "outDir": "dist",
-        "declaration": true
+        "declaration": true,
+        "moduleResolution": "node"
     },
     "exclude": [
         "node_modules",
-        "dist"
+        "dist",
+        "test"
     ]
 }
