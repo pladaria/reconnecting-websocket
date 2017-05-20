@@ -1,3 +1,9 @@
+/*!
+ * Reconnecting WebSocket
+ * by Pedro Ladaria <pedro.ladaria@gmail.com>
+ * https://github.com/pladaria/reconnecting-websocket
+ * License MIT
+ */
 type Options = {
     constructor?: new(url: string, protocols?: string | string[]) => WebSocket;
     maxReconnectionDelay?: number;
@@ -184,6 +190,7 @@ const ReconnectingWebsocket = function(
             // don't get fired on the real close.
             handleClose();
             ws.removeEventListener('close', handleClose);
+
             // run and remove level2
             if (Array.isArray(listeners.close)) {
                 listeners.close.forEach(([listener, options]) => {
@@ -191,6 +198,7 @@ const ReconnectingWebsocket = function(
                     ws.removeEventListener('close', listener, options);
                 });
             }
+
             // run and remove level0
             if (ws.onclose) {
                 savedOnClose = ws.onclose;

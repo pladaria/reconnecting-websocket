@@ -68,7 +68,7 @@ var ReconnectingWebsocket = function (url, protocols, options) {
     var log = config.debug ? function () {
         var params = [];
         for (var _i = 0; _i < arguments.length; _i++) {
-            params[_i - 0] = arguments[_i];
+            params[_i] = arguments[_i];
         }
         return console.log.apply(console, ['RWS:'].concat(params));
     } : function () { };
