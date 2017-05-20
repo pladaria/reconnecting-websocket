@@ -5,12 +5,13 @@
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc index.ts --outDir dist",
-    "build-amd": "tsc index.ts -m AMD --outFile ./dist/reconnecting-websocket.amd.js",
+    "build": "tsc",
+    "build-amd": "tsc -m AMD --outFile ./dist/reconnecting-websocket.amd.js",
     "test": "nyc --reporter=text-summary --reporter=lcov ava --verbose --serial test/test.js",
-    "prebuild": "rimraf dist",
+    "clean": "rimraf dist",
     "report": "nyc report --reporter=html && opn coverage/index.html",
-    "prepublish": "npm run build && npm run build-amd && npm test"
+    "prepublish": "npm run clean && npm run build && npm run build-amd && npm test",
+    "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls"
   },
   "keywords": [
     "websocket",
