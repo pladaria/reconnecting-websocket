@@ -1,3 +1,6 @@
 .nyc_output
 test
 coverage
+coverage
+.nyc_output
+yarn.lock

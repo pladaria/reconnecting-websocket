@@ -5,9 +5,9 @@
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "build-amd": "tsc -m AMD --outFile ./dist/reconnecting-websocket.amd.js",
-    "test": "nyc ava --verbose --serial test/test.js",
+    "build": "tsc index.ts --outDir dist",
+    "build-amd": "tsc index.ts -m AMD --outFile ./dist/reconnecting-websocket.amd.js",
+    "test": "nyc --reporter=text-summary --reporter=lcov ava --verbose --serial test/test.js",
     "prebuild": "rimraf dist",
     "report": "nyc report --reporter=html && opn coverage/index.html",
     "prepublish": "npm run build && npm run build-amd && npm test"
@@ -27,6 +27,7 @@
   "license": "MIT",
   "devDependencies": {
     "ava": "^0.19.1",
+    "coveralls": "^2.13.1",
     "eslint": "^3.19.0",
     "html5-websocket": "^1.0.0",
     "nyc": "^10.3.2",
