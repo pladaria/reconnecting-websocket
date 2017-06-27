@@ -122,7 +122,7 @@ const Html5WebSocket = require('html5-websocket');
 const WebSocket = require('reconnecting-websocket');
 
 const options = {constructor: Html5WebSocket};
-const ws = new WebSocket('ws://my.site.com', null, options);
+const ws = new WebSocket('ws://my.site.com', undefined, options);
 ```
 
 #### Max retries
@@ -134,7 +134,7 @@ By default, `maxRetries` is set to `Infinity`.
 ```javascript
 const WebSocket = require('reconnecting-websocket');
 
-const ws = new WebSocket('ws://my.site.com', null, {maxRetries: 3});
+const ws = new WebSocket('ws://my.site.com', undefined, {maxRetries: 3});
 ws.onerror = (err) => {
     if (err.code === 'EHOSTDOWN') {
         console.log('server down');
