@@ -91,7 +91,7 @@ define("index", ["require", "exports"], function (require, exports) {
             }
         }, 0); };
         var handleClose = function () {
-            log('close');
+            log('handleClose', { shouldRetry: shouldRetry });
             retriesCount++;
             log('retries count:', retriesCount);
             if (retriesCount > config.maxRetries) {
@@ -104,7 +104,7 @@ define("index", ["require", "exports"], function (require, exports) {
             else {
                 reconnectDelay = updateReconnectionDelay(config, reconnectDelay);
             }
-            log('reconnectDelay:', reconnectDelay);
+            log('handleClose - reconnectDelay:', reconnectDelay);
             if (shouldRetry) {
                 setTimeout(connect, reconnectDelay);
             }
@@ -147,10 +147,11 @@ define("index", ["require", "exports"], function (require, exports) {
             if (code === void 0) { code = 1000; }
             if (reason === void 0) { reason = ''; }
             var _b = _a === void 0 ? {} : _a, _c = _b.keepClosed, keepClosed = _c === void 0 ? false : _c, _d = _b.fastClose, fastClose = _d === void 0 ? true : _d, _e = _b.delay, delay = _e === void 0 ? 0 : _e;
+            log('close - params:', { reason: reason, keepClosed: keepClosed, fastClose: fastClose, delay: delay });
+            shouldRetry = !keepClosed;
             if (delay) {
                 reconnectDelay = delay;
             }
-            shouldRetry = !keepClosed;
             ws.close(code, reason);
             if (fastClose) {
                 var fakeCloseEvent_1 = {
