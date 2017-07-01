@@ -364,18 +364,20 @@ test.cb('#14 fix - closing with keepClose before open', t => {
     let connectionsCount = 0;
 
     wss.on('connection', ws => {
+        console.log('new connection', connectionsCount);
         connectionsCount++;
         if (connectionsCount > 1) {
             t.fail('only one connection was expected');
             wss.close();
         }
-        ws.close(4000);
+        wss.close(4000);
     });
 
     const ws = new RWS(url, undefined, {
+        debug: true,
         constructor: HWS,
-        maxReconnectionDelay: 200,
-        minReconnectionDelay: 200,
+        maxReconnectionDelay: 300,
+        minReconnectionDelay: 300,
         reconnectionDelayGrowFactor: 1,
     });
 
