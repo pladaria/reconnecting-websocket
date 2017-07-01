@@ -372,7 +372,7 @@ test.cb('#14 fix - closing with keepClose before open', t => {
         ws.close(4000);
     });
 
-    const ws = new RWS(url, null, {
+    const ws = new RWS(url, undefined, {
         constructor: HWS,
         maxReconnectionDelay: 200,
         minReconnectionDelay: 200,
