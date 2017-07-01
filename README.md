@@ -53,11 +53,11 @@ Ping me if you find any problems. Or, even better, write a test for your case an
 ### Simple usage
 
 ```javascript
-const WebSocket = require('reconnecting-websocket');
-const ws = new WebSocket('ws://my.site.com');
+const ReconnectingWebSocket = require('reconnecting-websocket');
+const rws = new ReconnectingWebSocket('ws://my.site.com');
 
-ws.addEventListener('open', () => {
-    ws.send('hello!');
+rws.addEventListener('open', () => {
+    rws.send('hello!');
 });
 ```
 
@@ -82,10 +82,10 @@ const defaultOptions = {
 #### Sample with custom options
 
 ```javascript
-const WebSocket = require('reconnecting-websocket');
+const ReconnectingWebSocket = require('reconnecting-websocket');
 
 const options = {connectionTimeout: 1000};
-const ws = new WebSocket('ws://my.site.com', [], options);
+const rws = new ReconnectingWebSocket('ws://my.site.com', [], options);
 ```
 
 #### Manually closing
@@ -105,7 +105,7 @@ close(code = 1000, reason = '', {keepClosed: boolean, fastClose: boolean, delay:
 If you set any attributes of WebSocket itself, such as `binaryType`, make sure to set them again after each reconnection, i.e. on the `open` event:
 
 ```javascript
-ws.addEventListener('open', () => {
+rws.addEventListener('open', () => {
     ws.binaryType = 'arraybuffer';
     ws.send('i am ready to receive some data!');
 });
@@ -119,10 +119,10 @@ The example uses the [html5-websocket](https://github.com/pladaria/html5-websock
 
 ```javascript
 const Html5WebSocket = require('html5-websocket');
-const WebSocket = require('reconnecting-websocket');
+const ReconnectingWebSocket = require('reconnecting-websocket');
 
 const options = {constructor: Html5WebSocket};
-const ws = new WebSocket('ws://my.site.com', undefined, options);
+const rws = new ReconnectingWebSocket('ws://my.site.com', undefined, options);
 ```
 
 #### Max retries
@@ -132,9 +132,9 @@ When the max retries limit is reached, an error event with code `EHOSTDOWN` is e
 By default, `maxRetries` is set to `Infinity`.
 
 ```javascript
-const WebSocket = require('reconnecting-websocket');
+const ReconnectingWebSocket = require('reconnecting-websocket');
 
-const ws = new WebSocket('ws://my.site.com', undefined, {maxRetries: 3});
+const rws = new ReconnectingWebSocket('ws://my.site.com', undefined, {maxRetries: 3});
 ws.onerror = (err) => {
     if (err.code === 'EHOSTDOWN') {
         console.log('server down');
