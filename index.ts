@@ -108,7 +108,7 @@ const ReconnectingWebsocket = function(
     }, 0);
 
     const handleClose = () => {
-        log('close');
+        log('handleClose', {shouldRetry});
         retriesCount++;
         log('retries count:', retriesCount);
         if (retriesCount > config.maxRetries) {
@@ -120,7 +120,7 @@ const ReconnectingWebsocket = function(
         } else {
             reconnectDelay = updateReconnectionDelay(config, reconnectDelay);
         }
-        log('reconnectDelay:', reconnectDelay);
+        log('handleClose - reconnectDelay:', reconnectDelay);
 
         if (shouldRetry) {
             setTimeout(connect, reconnectDelay);
@@ -171,10 +171,12 @@ const ReconnectingWebsocket = function(
     connect();
 
     this.close = (code = 1000, reason = '', {keepClosed = false, fastClose = true, delay = 0} = {}) => {
+        log('close - params:', {reason, keepClosed, fastClose, delay});
+        shouldRetry = !keepClosed;
+
         if (delay) {
             reconnectDelay = delay;
         }
-        shouldRetry = !keepClosed;
 
         ws.close(code, reason);
 
