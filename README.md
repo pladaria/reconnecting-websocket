@@ -17,8 +17,9 @@ WebSocket that will automatically reconnect if the connection is closed.
 - Handle connection timeouts
 - Full test coverage
 - Debug mode
-- Fast close (new in version 3)
+- Fast close
 - AMD build available (see dist folder)
+- Allows changing server URL
 
 ## Install
 
@@ -59,6 +60,21 @@ const rws = new ReconnectingWebSocket('ws://my.site.com');
 rws.addEventListener('open', () => {
     rws.send('hello!');
 });
+```
+
+### Update URL
+
+The `url` parameter also accepts a `function` so you have a chance to update the URL before connecting:
+```
+const ReconnectingWebSocket = require('reconnecting-websocket');
+
+const urls = ['ws://my.site.com', 'ws://your.site.com', 'ws://their.site.com'];
+let urlIndex = 0;
+
+// Round robin url provider
+const getUrl = () => urls[urlIndex++ % urls.length];
+
+const rws = new ReconnectingWebSocket(getUrl);
 ```
 
 ### Configure

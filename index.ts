@@ -63,7 +63,7 @@ const reassignEventListeners = (ws: WebSocket, oldWs: WebSocket, listeners) => {
 };
 
 const ReconnectingWebsocket = function(
-    url: string,
+    url: string | (() => string),
     protocols?: string|string[],
     options = <Options>{}
 ) {
@@ -134,7 +134,8 @@ const ReconnectingWebsocket = function(
 
         log('connect');
         const oldWs = ws;
-        ws = new (<any>config.constructor)(url, protocols);
+        const wsUrl = (typeof url === 'function') ? url() : url;
+        ws = new (<any>config.constructor)(wsUrl, protocols);
 
         connectingTimeout = setTimeout(() => {
             log('timeout');

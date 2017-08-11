@@ -1,4 +1,4 @@
-declare const ReconnectingWebsocket: (url: string, protocols?: string | string[], options?: {
+declare const ReconnectingWebsocket: (url: string | (() => string), protocols?: string | string[], options?: {
     constructor?: new (url: string, protocols?: string | string[]) => WebSocket;
     maxReconnectionDelay?: number;
     minReconnectionDelay?: number;

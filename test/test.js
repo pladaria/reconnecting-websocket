@@ -32,6 +32,21 @@ test.cb('global WebSocket is used if available', t => {
     };
 });
 
+test.cb('url provider', t => {
+    t.plan(1);
+    const wss = new WSS({port: PORT});
+
+    const getUrl = () => url;
+    const ws = new RWS(getUrl, null, {maxRetries: 0, constructor: HWS});
+
+    ws.onopen = () => {
+        t.pass('Connected');
+        ws.close(1000, '', {keepClosed: true});
+        wss.close();
+        t.end();
+    }
+});
+
 test('connection status constants', t => {
     const ws = new RWS(url, null, {constructor: HWS});
     t.is(ws.CONNECTING, 0);
