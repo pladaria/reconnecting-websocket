@@ -65,7 +65,8 @@ rws.addEventListener('open', () => {
 ### Update URL
 
 The `url` parameter also accepts a `function` so you have a chance to update the URL before connecting:
-```
+
+```javascript
 const ReconnectingWebSocket = require('reconnecting-websocket');
 
 const urls = ['ws://my.site.com', 'ws://your.site.com', 'ws://their.site.com'];
