@@ -364,7 +364,6 @@ test.cb('#14 fix - closing with keepClose before open', t => {
     let connectionsCount = 0;
 
     wss.on('connection', ws => {
-        console.log('new connection', connectionsCount);
         connectionsCount++;
         if (connectionsCount > 1) {
             t.fail('only one connection was expected');
