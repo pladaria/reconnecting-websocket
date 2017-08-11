@@ -1,5 +1,5 @@
 declare module "index" {
-    const ReconnectingWebsocket: (url: string, protocols?: string | string[], options?: {
+    const ReconnectingWebsocket: (url: string | (() => string), protocols?: string | string[], options?: {
         constructor?: new (url: string, protocols?: string | string[]) => WebSocket;
         maxReconnectionDelay?: number;
         minReconnectionDelay?: number;

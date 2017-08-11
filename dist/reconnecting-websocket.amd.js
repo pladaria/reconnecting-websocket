@@ -115,7 +115,8 @@ define("index", ["require", "exports"], function (require, exports) {
             }
             log('connect');
             var oldWs = ws;
-            ws = new config.constructor(url, protocols);
+            var wsUrl = (typeof url === 'function') ? url() : url;
+            ws = new config.constructor(wsUrl, protocols);
             connectingTimeout = setTimeout(function () {
                 log('timeout');
                 ws.close();
