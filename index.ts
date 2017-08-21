@@ -5,6 +5,7 @@
  * License MIT
  */
 type Options = {
+    [key: string]: any,
     constructor?: new(url: string, protocols?: string | string[]) => WebSocket;
     maxReconnectionDelay?: number;
     minReconnectionDelay?: number;
@@ -14,7 +15,19 @@ type Options = {
     debug?: boolean;
 };
 
-const isWebSocket = constructor =>
+interface EventListener {
+    (event?: any): any;
+};
+
+interface EventListeners {
+    [key: string]: [EventListener, any][];
+};
+
+interface ReconnectingWebsocket extends WebSocket {
+    [key: string]: any;
+};
+
+const isWebSocket = (constructor: any) =>
     constructor && constructor.CLOSING === 2;
 
 const isGlobalWebSocket = () =>
@@ -30,7 +43,7 @@ const getDefaultOptions = () => <Options>({
     debug: false,
 });
 
-const bypassProperty = (src, dst, name: string) => {
+const bypassProperty = (src: any, dst: any, name: string) => {
     Object.defineProperty(dst, name, {
         get: () => src[name],
         set: (value) => {src[name] = value},
@@ -51,29 +64,31 @@ const updateReconnectionDelay = (config: Options, previousDelay: number) => {
 
 const LEVEL_0_EVENTS = ['onopen', 'onclose', 'onmessage', 'onerror'];
 
-const reassignEventListeners = (ws: WebSocket, oldWs: WebSocket, listeners) => {
+const reassignEventListeners = (ws: ReconnectingWebsocket, oldWs: ReconnectingWebsocket, listeners: EventListeners) => {
     Object.keys(listeners).forEach(type => {
         listeners[type].forEach(([listener, options]) => {
             ws.addEventListener(type, listener, options);
         });
     });
     if (oldWs) {
-        LEVEL_0_EVENTS.forEach(name => {ws[name] = oldWs[name]});
+        LEVEL_0_EVENTS.forEach(name => {
+            ws[name] = oldWs[name];
+        });
     }
 };
 
 const ReconnectingWebsocket = function(
     url: string | (() => string),
-    protocols?: string|string[],
+    protocols?: string | string[],
     options = <Options>{}
 ) {
     let ws: WebSocket;
-    let connectingTimeout;
+    let connectingTimeout: number;
     let reconnectDelay = 0;
     let retriesCount = 0;
     let shouldRetry = true;
-    let savedOnClose = null;
-    const listeners: any = {};
+    let savedOnClose: any = null;
+    const listeners: EventListeners = {};
 
     // require new to construct
     if (!(this instanceof ReconnectingWebsocket)) {
@@ -90,7 +105,7 @@ const ReconnectingWebsocket = function(
         throw new TypeError('Invalid WebSocket constructor. Set `options.constructor`');
     }
 
-    const log = config.debug ? (...params) => console.log('RWS:', ...params) : () => {};
+    const log = config.debug ? (...params: any[]) => console.log('RWS:', ...params) : () => {};
 
     /**
      * Not using dispatchEvent, otherwise we must use a DOM Event object
@@ -172,8 +187,8 @@ const ReconnectingWebsocket = function(
     connect();
 
     this.close = (code = 1000, reason = '', {keepClosed = false, fastClose = true, delay = 0} = {}) => {
-        log('close - params:', {reason, keepClosed, fastClose, delay});
-        shouldRetry = !keepClosed;
+        log('close - params:', {reason, keepClosed, fastClose, delay, retriesCount, maxRetries: config.maxRetries});
+        shouldRetry = !keepClosed && retriesCount <= config.maxRetries;
 
         if (delay) {
             reconnectDelay = delay;
@@ -211,7 +226,7 @@ const ReconnectingWebsocket = function(
         }
     };
 
-    this.send = (data) => {
+    this.send = (data: any) => {
         ws.send(data)
     };
 

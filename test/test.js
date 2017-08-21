@@ -203,8 +203,7 @@ test.cb('level2 event listeners (addEventListener, removeEventListener)', t => {
     });
 });
 
-// for some reason, this test fails in TravisCI
-if (!process.env.CI) test.cb('connection timeout', t => {
+test.cb('connection timeout', t => {
     const spawn = require('child_process').spawn;
     const proc = spawn('node', [`${__dirname}/unresponsive-server.js`, String(PORT_UNRESPONSIVE)]);
 
@@ -219,17 +218,14 @@ if (!process.env.CI) test.cb('connection timeout', t => {
             maxRetries: 0,
         });
 
-        t.plan(3);
+        t.plan(2);
         ws.addEventListener('close', () => {
             t.pass();
         });
         ws.addEventListener('error', err => {
-            if (err.code === 'EHOSTDOWN') {
-                t.pass();
-                t.end();
-            }
             if (err.code === 'ETIMEDOUT') {
                 t.pass();
+                t.end();
             }
         });
     });
