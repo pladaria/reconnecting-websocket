@@ -136,7 +136,12 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         ws.addEventListener('open', function () {
             clearTimeout(connectingTimeout);
             log('open');
-            reconnectDelay = initReconnectionDelay(config);
+            if (!reconnectDelay) {
+                reconnectDelay = initReconnectionDelay(config);
+            }
+            else {
+                reconnectDelay = updateReconnectionDelay(config, reconnectDelay);
+            }
             log('reconnectDelay:', reconnectDelay);
             retriesCount = 0;
         });
