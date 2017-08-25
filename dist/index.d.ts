@@ -10,5 +10,5 @@ declare const ReconnectingWebsocket: (url: string | (() => string), protocols?: 
     connectionTimeout?: number;
     maxRetries?: number;
     debug?: boolean;
-}) => void;
+}) => ReconnectingWebsocket;
 export = ReconnectingWebsocket;
