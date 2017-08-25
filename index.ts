@@ -247,6 +247,7 @@ const ReconnectingWebsocket = function(
         }
         ws.removeEventListener(type, listener, options);
     };
+    return this as ReconnectingWebsocket;
 };
 
 export = ReconnectingWebsocket;

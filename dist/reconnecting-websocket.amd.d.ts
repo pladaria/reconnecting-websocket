@@ -11,6 +11,6 @@ declare module "index" {
         connectionTimeout?: number;
         maxRetries?: number;
         debug?: boolean;
-    }) => void;
+    }) => ReconnectingWebsocket;
     export = ReconnectingWebsocket;
 }

@@ -212,6 +212,7 @@ define("index", ["require", "exports"], function (require, exports) {
             }
             ws.removeEventListener(type, listener, options);
         };
+        return this;
     };
     return ReconnectingWebsocket;
 });
