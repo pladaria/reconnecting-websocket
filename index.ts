@@ -130,11 +130,11 @@ const ReconnectingWebsocket = function(
             emitError('EHOSTDOWN', 'Too many failed connection attempts');
             return;
         }
-        if (!reconnectDelay) {
-            reconnectDelay = initReconnectionDelay(config);
-        } else {
-            reconnectDelay = updateReconnectionDelay(config, reconnectDelay);
-        }
+        // if (!reconnectDelay) {
+        reconnectDelay = initReconnectionDelay(config);
+        // } else {
+        //     reconnectDelay = updateReconnectionDelay(config, reconnectDelay);
+        // }
         log('handleClose - reconnectDelay:', reconnectDelay);
 
         if (shouldRetry) {
@@ -169,7 +169,12 @@ const ReconnectingWebsocket = function(
         ws.addEventListener('open', () => {
             clearTimeout(connectingTimeout);
             log('open');
-            reconnectDelay = initReconnectionDelay(config);
+            // reconnectDelay = initReconnectionDelay(config);
+            if (!reconnectDelay) {
+                reconnectDelay = initReconnectionDelay(config);
+            } else {
+                reconnectDelay = updateReconnectionDelay(config, reconnectDelay);
+            }
             log('reconnectDelay:', reconnectDelay);
             retriesCount = 0;
         });
