@@ -119,32 +119,34 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         }
         log('connect');
         var oldWs = ws;
-        var wsUrl = (typeof url === 'function') ? url() : url;
-        ws = new config.constructor(wsUrl, protocols);
-        connectingTimeout = setTimeout(function () {
-            log('timeout');
-            ws.close();
-            emitError('ETIMEDOUT', 'Connection timeout');
-        }, config.connectionTimeout);
-        log('bypass properties');
-        for (var key in ws) {
-            // @todo move to constant
-            if (['addEventListener', 'removeEventListener', 'close', 'send'].indexOf(key) < 0) {
-                bypassProperty(ws, _this, key);
+        return url.then(function (connectionUrl) {
+            ws = new config.constructor(connectionUrl, protocols);
+            connectingTimeout = setTimeout(function () {
+                log('timeout');
+                ws.close();
+                emitError('ETIMEDOUT', 'Connection timeout');
+            }, config.connectionTimeout);
+            log('bypass properties');
+            for (var key in ws) {
+                // @todo move to constant
+                if (['addEventListener', 'removeEventListener', 'close', 'send'].indexOf(key) < 0) {
+                    bypassProperty(ws, _this, key);
+                }
             }
-        }
-        ws.addEventListener('open', function () {
-            clearTimeout(connectingTimeout);
-            log('open');
-            reconnectDelay = initReconnectionDelay(config);
-            log('reconnectDelay:', reconnectDelay);
-            retriesCount = 0;
+            ws.addEventListener('open', function () {
+                clearTimeout(connectingTimeout);
+                log('open');
+                reconnectDelay = initReconnectionDelay(config);
+                log('reconnectDelay:', reconnectDelay);
+                retriesCount = 0;
+            });
+            ws.addEventListener('close', handleClose);
+            reassignEventListeners(ws, oldWs, listeners);
+            // because when closing with fastClose=true, it is saved and set to null to avoid double calls
+            ws.onclose = ws.onclose || savedOnClose;
+            savedOnClose = null;
+            return ws;
         });
-        ws.addEventListener('close', handleClose);
-        reassignEventListeners(ws, oldWs, listeners);
-        // because when closing with fastClose=true, it is saved and set to null to avoid double calls
-        ws.onclose = ws.onclose || savedOnClose;
-        savedOnClose = null;
     };
     log('init');
     connect();
