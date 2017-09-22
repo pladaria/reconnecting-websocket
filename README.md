@@ -123,8 +123,8 @@ If you set any attributes of WebSocket itself, such as `binaryType`, make sure t
 
 ```javascript
 rws.addEventListener('open', () => {
-    ws.binaryType = 'arraybuffer';
-    ws.send('i am ready to receive some data!');
+    rws.binaryType = 'arraybuffer';
+    rws.send('i am ready to receive some data!');
 });
 ```
 
@@ -152,7 +152,7 @@ By default, `maxRetries` is set to `Infinity`.
 const ReconnectingWebSocket = require('reconnecting-websocket');
 
 const rws = new ReconnectingWebSocket('ws://my.site.com', undefined, {maxRetries: 3});
-ws.onerror = (err) => {
+rws.onerror = (err) => {
     if (err.code === 'EHOSTDOWN') {
         console.log('server down');
     }
