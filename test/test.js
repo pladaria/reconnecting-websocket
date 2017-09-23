@@ -203,7 +203,7 @@ test.cb('level2 event listeners (addEventListener, removeEventListener)', t => {
     });
 });
 
-test.cb('connection timeout', t => {
+test.skip.cb('connection timeout', t => {
     const spawn = require('child_process').spawn;
     const proc = spawn('node', [`${__dirname}/unresponsive-server.js`, String(PORT_UNRESPONSIVE)]);
 
