@@ -13,7 +13,7 @@ WebSocket that will automatically reconnect if the connection is closed.
 - Multiplatform (Web, ServiceWorkers, Node.js, React Native)
 - Dependency free (does not depends on Window, DOM or any EventEmitter library)
 - Reassign event listeners when a new WebSocket instance is created
-- Automatic reconnection using [rfc6455](https://tools.ietf.org/html/rfc6455#section-7.2.3) guidelines
+- Automatic reconnection using [RFC 6455](https://tools.ietf.org/html/rfc6455#section-7.2.3) guidelines
 - Handle connection timeouts
 - Full test coverage
 - Debug mode
@@ -123,8 +123,8 @@ If you set any attributes of WebSocket itself, such as `binaryType`, make sure t
 
 ```javascript
 rws.addEventListener('open', () => {
-    ws.binaryType = 'arraybuffer';
-    ws.send('i am ready to receive some data!');
+    rws.binaryType = 'arraybuffer';
+    rws.send('i am ready to receive some data!');
 });
 ```
 
@@ -152,7 +152,7 @@ By default, `maxRetries` is set to `Infinity`.
 const ReconnectingWebSocket = require('reconnecting-websocket');
 
 const rws = new ReconnectingWebSocket('ws://my.site.com', undefined, {maxRetries: 3});
-ws.onerror = (err) => {
+rws.onerror = (err) => {
     if (err.code === 'EHOSTDOWN') {
         console.log('server down');
     }
