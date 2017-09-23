@@ -211,6 +211,5 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         }
         ws.removeEventListener(type, listener, options);
     };
-    return this;
 };
 module.exports = ReconnectingWebsocket;
