@@ -4,7 +4,7 @@
  * https://github.com/pladaria/reconnecting-websocket
  * License MIT
  */
-type Options = {
+interface Options = {
     [key: string]: any,
     constructor?: new(url: string, protocols?: string | string[]) => WebSocket;
     maxReconnectionDelay?: number;
@@ -250,4 +250,4 @@ const ReconnectingWebsocket = function(
 
 };
 
-export = ReconnectingWebsocket;
+export default ReconnectingWebsocket;
