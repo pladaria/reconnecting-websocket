@@ -27,14 +27,14 @@
   "author": "Pedro Ladaria <pedro.ladaria@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "ava": "^0.21.0",
-    "coveralls": "^2.13.1",
-    "html5-websocket": "^2.0.0",
-    "nyc": "^11.1.0",
+    "ava": "^0.22.0",
+    "coveralls": "^3.0.0",
+    "html5-websocket": "^2.0.1",
+    "nyc": "^11.2.1",
     "opn-cli": "^3.1.0",
-    "rimraf": "^2.5.4",
-    "typescript": "^2.4.2",
-    "ws": "^3.1.0"
+    "rimraf": "^2.6.2",
+    "typescript": "^2.5.3",
+    "ws": "^3.2.0"
   },
   "dependencies": {},
   "directories": {
