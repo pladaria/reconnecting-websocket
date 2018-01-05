@@ -403,7 +403,7 @@ test.cb('#14 fix - closing with keepClose before open', t => {
 
 test.cb('reconnectScheduled eventListener is called', t => {
     const wss = new WSS({port: PORT});
-    wss.on('connection', ws =>  wss.close());
+    wss.on('connection', () =>  wss.close());
 
     const reconnectScheduled = (e) => {
         t.is(e.detail, 10)
@@ -424,7 +424,7 @@ test.cb('reconnectScheduled eventListener is called', t => {
 
 test.cb('reconnecting eventListener is called', t => {
     const wss = new WSS({port: PORT});
-    wss.on('connection', ws =>  wss.close());
+    wss.on('connection', () => wss.close());
 
     const reconnecting = () => {
         t.pass('reconnecting called');
@@ -440,4 +440,75 @@ test.cb('reconnecting eventListener is called', t => {
         minReconnectionDelay: 10,
     });
     ws.addEventListener('reconnecting', reconnecting);
+})
+
+test.cb('reconnect() cancels outstanding reconnect', t => {
+    let wss = new WSS({port: PORT});
+    wss.on('connection', (ws) => {
+        ws.send('ping');
+        ws.on('message', () => {
+            // This close will trigger a reconnect in 1000
+            wss.close();
+            wss = new WSS({port: PORT});
+        })
+    });
+
+    const ws = new RWS(url, null, {
+        constructor: HWS,
+        maxRetries: 3,
+        reconnectionDelayGrowFactor: 1.0,
+        maxReconnectionDelay: 500,
+        minReconnectionDelay: 500,
+    });
+
+    let closeCount = 0;
+    ws.addEventListener('close', () => closeCount++ )
+
+    // Force an immediate reconnect onclose
+    ws.addEventListener('close', () => ws.reconnect())
+
+    let reconnectCount = 0;
+    ws.addEventListener('reconnecting', () => reconnectCount++);
+    ws.addEventListener('message', () => ws.send('pong'))
+
+    setTimeout(() => {
+        t.is(reconnectCount, 1);
+        t.is(closeCount, 1)
+        wss.close();
+        t.end();
+    }, 1000);
+})
+
+test.cb('reconnect() closes if ws is open', t => {
+    const wss = new WSS({port: PORT});
+    wss.on('connection', (ws) => {
+    });
+
+    const ws = new RWS(url, null, {
+        constructor: HWS,
+        maxRetries: 3,
+        reconnectionDelayGrowFactor: 1.0,
+        maxReconnectionDelay: 500,
+        minReconnectionDelay: 500,
+    });
+
+    let closeCount = 0;
+    ws.addEventListener('close', () => closeCount++ )
+
+    // Force an immediate reconnect onclose
+    let reconnectedOnce = false
+    ws.addEventListener('open', () => {
+        if (!reconnectedOnce) ws.reconnect();
+        reconnectedOnce = true;
+    });
+
+    let reconnectCount = 0;
+    ws.addEventListener('reconnecting', () => reconnectCount++);
+
+    setTimeout(() => {
+        t.is(reconnectCount, 1);
+        t.is(closeCount, 1)
+        wss.close();
+        t.end();
+    }, 1000);
 })
