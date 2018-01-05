@@ -4,7 +4,7 @@ const RWS = require('..');
 const test = require('ava');
 const PORT = 50123;
 const PORT_UNRESPONSIVE = 50124;
-const url = `ws://localhost:${PORT}`;
+const url = () => Promise.resolve(`ws://localhost:${PORT}`);
 
 test('throws with invalid constructor', t => {
     t.throws(() => {
@@ -32,12 +32,11 @@ test.cb('global WebSocket is used if available', t => {
     };
 });
 
-test.cb('url provider', t => {
+test.cb('url as string', t => {
     t.plan(1);
     const wss = new WSS({port: PORT});
 
-    const getUrl = () => url;
-    const ws = new RWS(getUrl, null, {maxRetries: 0, constructor: HWS});
+    const ws = new RWS(`ws://localhost:${PORT}`, null, {maxRetries: 0, constructor: HWS});
 
     ws.onopen = () => {
         t.pass('Connected');
@@ -167,7 +166,6 @@ test.cb('level2 event listeners (addEventListener, removeEventListener)', t => {
         maxReconnectionDelay: 60,
         minReconnectionDelay: 11,
     });
-
     t.plan(8);
     let count = 0;
     const handleClose1 = () => {
@@ -212,12 +210,11 @@ test.skip.cb('connection timeout', t => {
     });
 
     proc.stdout.on('data', () => {
-        const ws = new RWS(`ws://localhost:${PORT_UNRESPONSIVE}`, null, {
+        const ws = new RWS(Promise.resolve(`ws://localhost:${PORT_UNRESPONSIVE}`), null, {
             constructor: HWS,
             connectionTimeout: 100,
             maxRetries: 0,
         });
-
         t.plan(2);
         ws.addEventListener('close', () => {
             t.pass();
@@ -260,7 +257,7 @@ test.cb('connect, send, receive, close {fastClose: false}', t => {
 
     ws.addEventListener('close', () => {
         t.is(ws.readyState, ws.CLOSED);
-        t.is(ws.url, url);
+        t.is(ws.url, `ws://localhost:${PORT}`);
         wss.close();
         t.end();
     });
@@ -299,7 +296,7 @@ test.cb('connect, send, receive, close {fastClose: true}', t => {
 
     ws.addEventListener('close', () => {
         t.is(ws.readyState, ws.CLOSING);
-        t.is(ws.url, url);
+        t.is(ws.url, `ws://localhost:${PORT}`);
     });
 
     ws.onclose = (event) => {
@@ -347,7 +344,7 @@ test.cb('close and keepClosed', t => {
 
     ws.addEventListener('close', () => {
         t.is(ws.readyState, ws.CLOSED);
-        t.is(ws.url, url);
+        t.is(ws.url, `ws://localhost:${PORT}`);
     });
 });
 
