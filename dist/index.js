@@ -1,33 +1,38 @@
 "use strict";
-var isWebSocket = function (constructor) { return constructor && constructor.CLOSING === 2; };
-var isGlobalWebSocket = function () { return typeof WebSocket !== 'undefined' && isWebSocket(WebSocket); };
-var getDefaultOptions = function () {
-    return ({
-        constructor: isGlobalWebSocket() ? WebSocket : null,
-        maxReconnectionDelay: 10000,
-        minReconnectionDelay: 1500,
-        reconnectionDelayGrowFactor: 1.3,
-        connectionTimeout: 4000,
-        maxRetries: Infinity,
-        debug: false,
-    });
+;
+;
+;
+var isWebSocket = function (constructor) {
+    return constructor && constructor.CLOSING === 2;
 };
+var isGlobalWebSocket = function () {
+    return typeof WebSocket !== 'undefined' && isWebSocket(WebSocket);
+};
+var getDefaultOptions = function () { return ({
+    constructor: isGlobalWebSocket() ? WebSocket : null,
+    maxReconnectionDelay: 10000,
+    minReconnectionDelay: 1500,
+    reconnectionDelayGrowFactor: 1.3,
+    connectionTimeout: 4000,
+    maxRetries: Infinity,
+    debug: false,
+}); };
 var bypassProperty = function (src, dst, name) {
     Object.defineProperty(dst, name, {
         get: function () { return src[name]; },
-        set: function (value) {
-            src[name] = value;
-        },
+        set: function (value) { src[name] = value; },
         enumerable: true,
         configurable: true,
     });
 };
 var initReconnectionDelay = function (config) {
-    return config.minReconnectionDelay + Math.random() * config.minReconnectionDelay;
+    return (config.minReconnectionDelay + Math.random() * config.minReconnectionDelay);
 };
 var updateReconnectionDelay = function (config, previousDelay) {
     var newDelay = previousDelay * config.reconnectionDelayGrowFactor;
-    return newDelay > config.maxReconnectionDelay ? config.maxReconnectionDelay : newDelay;
+    return (newDelay > config.maxReconnectionDelay)
+        ? config.maxReconnectionDelay
+        : newDelay;
 };
 var LEVEL_0_EVENTS = ['onopen', 'onclose', 'onmessage', 'onerror'];
 var LEVEL_1_EVENTS = ['open', 'close', 'message', 'error'];
@@ -53,6 +58,7 @@ var ReconnectingWebsocket = function (url, protocols, options) {
     var retriesCount = 0;
     var shouldRetry = true;
     var savedOnClose = null;
+    var nextReconnectImmediate = false;
     var listeners = {};
     // require new to construct
     if (!(this instanceof ReconnectingWebsocket)) {
@@ -62,7 +68,7 @@ var ReconnectingWebsocket = function (url, protocols, options) {
     var config = getDefaultOptions();
     Object.keys(config)
         .filter(function (key) { return options.hasOwnProperty(key); })
-        .forEach(function (key) { return (config[key] = options[key]); });
+        .forEach(function (key) { return config[key] = options[key]; });
     if (!isWebSocket(config.constructor)) {
         throw new TypeError('Invalid WebSocket constructor. Set `options.constructor`');
     }
@@ -77,21 +83,19 @@ var ReconnectingWebsocket = function (url, protocols, options) {
      * Not using dispatchEvent, otherwise we must use a DOM Event object
      * Deferred because we want to handle the close event before this
      */
-    var emitError = function (code, msg) {
-        return setTimeout(function () {
-            var err = new Error(msg);
-            err.code = code;
-            if (Array.isArray(listeners.error)) {
-                listeners.error.forEach(function (_a) {
-                    var fn = _a[0];
-                    return fn(err);
-                });
-            }
-            if (ws.onerror) {
-                ws.onerror(err);
-            }
-        }, 0);
-    };
+    var emitError = function (code, msg) { return setTimeout(function () {
+        var err = new Error(msg);
+        err.code = code;
+        if (Array.isArray(listeners.error)) {
+            listeners.error.forEach(function (_a) {
+                var fn = _a[0];
+                return fn(err);
+            });
+        }
+        if (ws.onerror) {
+            ws.onerror(err);
+        }
+    }, 0); };
     var handleClose = function () {
         log('handleClose', { shouldRetry: shouldRetry });
         retriesCount++;
@@ -108,9 +112,14 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         }
         log('handleClose - reconnectDelay:', reconnectDelay);
         if (shouldRetry) {
-            setTimeout(connect, reconnectDelay);
-            var event_1 = { detail: reconnectDelay };
-            fireEventListeners('reconnectscheduled', event_1);
+            if (nextReconnectImmediate) {
+                connect();
+            }
+            else {
+                setTimeout(connect, reconnectDelay);
+                var event_1 = { detail: reconnectDelay };
+                fireEventListeners('reconnectscheduled', event_1);
+            }
         }
     };
     var fireEventListeners = function (type, event) {
@@ -126,7 +135,7 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         }
         log('connect');
         var oldWs = ws;
-        var wsUrl = typeof url === 'function' ? url() : url;
+        var wsUrl = (typeof url === 'function') ? url() : url;
         // only fire reconnecting the first time
         if (ws)
             fireEventListeners('reconnecting', {});
@@ -162,14 +171,7 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         if (code === void 0) { code = 1000; }
         if (reason === void 0) { reason = ''; }
         var _b = _a === void 0 ? {} : _a, _c = _b.keepClosed, keepClosed = _c === void 0 ? false : _c, _d = _b.fastClose, fastClose = _d === void 0 ? true : _d, _e = _b.delay, delay = _e === void 0 ? 0 : _e;
-        log('close - params:', {
-            reason: reason,
-            keepClosed: keepClosed,
-            fastClose: fastClose,
-            delay: delay,
-            retriesCount: retriesCount,
-            maxRetries: config.maxRetries,
-        });
+        log('close - params:', { reason: reason, keepClosed: keepClosed, fastClose: fastClose, delay: delay, retriesCount: retriesCount, maxRetries: config.maxRetries });
         shouldRetry = !keepClosed && retriesCount <= config.maxRetries;
         if (delay) {
             reconnectDelay = delay;
