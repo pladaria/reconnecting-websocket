@@ -136,7 +136,9 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         log('connect');
         var oldWs = ws;
         var wsUrl = (typeof url === 'function') ? url() : url;
-        fireEventListeners('reconnecting', {});
+        // only fire reconnecting the first time
+        if (ws)
+            fireEventListeners('reconnecting', {});
         ws = new config.constructor(wsUrl, protocols);
         connectingTimeout = setTimeout(function () {
             log('timeout');

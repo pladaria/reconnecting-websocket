@@ -166,8 +166,8 @@ const ReconnectingWebsocket = function(
         const oldWs = ws;
         const wsUrl = (typeof url === 'function') ? url() : url;
 
-        fireEventListeners('reconnecting', {} );
-
+        // only fire reconnecting the first time
+        if (ws) fireEventListeners('reconnecting', {});
         ws = new (<any>config.constructor)(wsUrl, protocols);
 
         connectingTimeout = setTimeout(() => {
