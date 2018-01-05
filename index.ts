@@ -63,10 +63,11 @@ const updateReconnectionDelay = (config: Options, previousDelay: number) => {
 };
 
 const LEVEL_0_EVENTS = ['onopen', 'onclose', 'onmessage', 'onerror'];
+const LEVEL_1_EVENTS = ['open', 'close', 'message', 'error'];
 
 const reassignEventListeners = (ws: ReconnectingWebsocket, oldWs: ReconnectingWebsocket, listeners: EventListeners) => {
-    Object.keys(listeners).forEach(type => {
-        listeners[type].forEach(([listener, options]) => {
+    LEVEL_1_EVENTS.forEach(type => {
+        (listeners[type] || []).forEach(([listener, options]) => {
             ws.addEventListener(type, listener, options);
         });
     });
@@ -76,6 +77,8 @@ const reassignEventListeners = (ws: ReconnectingWebsocket, oldWs: ReconnectingWe
         });
     }
 };
+
+type CustomEventsType = 'reconnecting' | 'reconnectscheduled';
 
 const ReconnectingWebsocket = function(
     url: string | (() => string),
@@ -88,6 +91,7 @@ const ReconnectingWebsocket = function(
     let retriesCount = 0;
     let shouldRetry = true;
     let savedOnClose: any = null;
+    let nextReconnectImmediate: boolean = false;
     const listeners: EventListeners = {};
 
     // require new to construct
@@ -138,9 +142,20 @@ const ReconnectingWebsocket = function(
         log('handleClose - reconnectDelay:', reconnectDelay);
 
         if (shouldRetry) {
-            setTimeout(connect, reconnectDelay);
+            if (nextReconnectImmediate) {
+                connect();
+            } else {
+                setTimeout(connect, reconnectDelay);
+                const event = <CustomEvent>{ detail: reconnectDelay };    
+                fireEventListeners('reconnectscheduled', event)
+            }
         }
     };
+
+    const fireEventListeners = (type: CustomEventsType, event: any) => {
+        const listenerConfig = listeners[type] || [];
+        listenerConfig.forEach(([listener]) => listener(event));
+    }
 
     const connect = () => {
         if (!shouldRetry) {
@@ -150,6 +165,9 @@ const ReconnectingWebsocket = function(
         log('connect');
         const oldWs = ws;
         const wsUrl = (typeof url === 'function') ? url() : url;
+
+        fireEventListeners('reconnecting', {} );
+
         ws = new (<any>config.constructor)(wsUrl, protocols);
 
         connectingTimeout = setTimeout(() => {

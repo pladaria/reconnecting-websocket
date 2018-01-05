@@ -35,9 +35,10 @@ var updateReconnectionDelay = function (config, previousDelay) {
         : newDelay;
 };
 var LEVEL_0_EVENTS = ['onopen', 'onclose', 'onmessage', 'onerror'];
+var LEVEL_1_EVENTS = ['open', 'close', 'message', 'error'];
 var reassignEventListeners = function (ws, oldWs, listeners) {
-    Object.keys(listeners).forEach(function (type) {
-        listeners[type].forEach(function (_a) {
+    LEVEL_1_EVENTS.forEach(function (type) {
+        (listeners[type] || []).forEach(function (_a) {
             var listener = _a[0], options = _a[1];
             ws.addEventListener(type, listener, options);
         });
@@ -57,6 +58,7 @@ var ReconnectingWebsocket = function (url, protocols, options) {
     var retriesCount = 0;
     var shouldRetry = true;
     var savedOnClose = null;
+    var nextReconnectImmediate = false;
     var listeners = {};
     // require new to construct
     if (!(this instanceof ReconnectingWebsocket)) {
@@ -110,8 +112,22 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         }
         log('handleClose - reconnectDelay:', reconnectDelay);
         if (shouldRetry) {
-            setTimeout(connect, reconnectDelay);
+            if (nextReconnectImmediate) {
+                connect();
+            }
+            else {
+                setTimeout(connect, reconnectDelay);
+                var event_1 = { detail: reconnectDelay };
+                fireEventListeners('reconnectscheduled', event_1);
+            }
         }
+    };
+    var fireEventListeners = function (type, event) {
+        var listenerConfig = listeners[type] || [];
+        listenerConfig.forEach(function (_a) {
+            var listener = _a[0];
+            return listener(event);
+        });
     };
     var connect = function () {
         if (!shouldRetry) {
@@ -120,6 +136,7 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         log('connect');
         var oldWs = ws;
         var wsUrl = (typeof url === 'function') ? url() : url;
+        fireEventListeners('reconnecting', {});
         ws = new config.constructor(wsUrl, protocols);
         connectingTimeout = setTimeout(function () {
             log('timeout');
