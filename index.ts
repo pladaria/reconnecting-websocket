@@ -63,10 +63,11 @@ const updateReconnectionDelay = (config: Options, previousDelay: number) => {
 };
 
 const LEVEL_0_EVENTS = ['onopen', 'onclose', 'onmessage', 'onerror'];
+const LEVEL_1_EVENTS = ['open', 'close', 'message', 'error'];
 
 const reassignEventListeners = (ws: ReconnectingWebsocket, oldWs: ReconnectingWebsocket, listeners: EventListeners) => {
-    Object.keys(listeners).forEach(type => {
-        listeners[type].forEach(([listener, options]) => {
+    LEVEL_1_EVENTS.forEach(type => {
+        (listeners[type] || []).forEach(([listener, options]) => {
             ws.addEventListener(type, listener, options);
         });
     });
@@ -76,6 +77,8 @@ const reassignEventListeners = (ws: ReconnectingWebsocket, oldWs: ReconnectingWe
         });
     }
 };
+
+type CustomEventsType = 'reconnecting' | 'reconnectscheduled';
 
 const ReconnectingWebsocket = function(
     url: string | (() => string),
@@ -88,6 +91,7 @@ const ReconnectingWebsocket = function(
     let retriesCount = 0;
     let shouldRetry = true;
     let savedOnClose: any = null;
+    let timer: any = null;
     const listeners: EventListeners = {};
 
     // require new to construct
@@ -138,9 +142,16 @@ const ReconnectingWebsocket = function(
         log('handleClose - reconnectDelay:', reconnectDelay);
 
         if (shouldRetry) {
-            setTimeout(connect, reconnectDelay);
+            timer = setTimeout(connect, reconnectDelay);
+            const event = <CustomEvent>{ detail: reconnectDelay };    
+            fireEventListeners('reconnectscheduled', event)
         }
     };
+
+    const fireEventListeners = (type: CustomEventsType, event: any) => {
+        const listenerConfig = listeners[type] || [];
+        listenerConfig.forEach(([listener]) => listener(event));
+    }
 
     const connect = () => {
         if (!shouldRetry) {
@@ -150,6 +161,9 @@ const ReconnectingWebsocket = function(
         log('connect');
         const oldWs = ws;
         const wsUrl = (typeof url === 'function') ? url() : url;
+
+        // only fire reconnecting the first time
+        if (ws) fireEventListeners('reconnecting', {});
         ws = new (<any>config.constructor)(wsUrl, protocols);
 
         connectingTimeout = setTimeout(() => {
@@ -173,6 +187,7 @@ const ReconnectingWebsocket = function(
             log('reconnectDelay:', reconnectDelay);
             retriesCount = 0;
         });
+
 
         ws.addEventListener('close', handleClose);
 
@@ -227,7 +242,7 @@ const ReconnectingWebsocket = function(
     };
 
     this.send = (data: any) => {
-        ws.send(data)
+        ws.send(data);
     };
 
     this.addEventListener = (type: string, listener: EventListener, options: any) => {
@@ -247,6 +262,18 @@ const ReconnectingWebsocket = function(
         }
         ws.removeEventListener(type, listener, options);
     };
+
+    this.reconnect = (code = 1000, reason = '') => {
+        // Clear the timeout incase we've already scheduled a reconect
+        clearTimeout(timer);
+        if (ws.readyState !== ws.CLOSED) {
+            // If the ws isn't closed, close it now and keep it closed
+            this.close(code, reason, { keepClosed: true });
+        }
+        // Re-enable retry
+        shouldRetry = true;
+        connect();
+    }
 
 };
 
