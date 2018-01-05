@@ -1,7 +1,7 @@
 interface ReconnectingWebsocket extends WebSocket {
     [key: string]: any;
 }
-declare const ReconnectingWebsocket: (url: Promise<string>, protocols?: string | string[], options?: {
+declare const ReconnectingWebsocket: (url: string | (() => Promise<string>), protocols?: string | string[], options?: {
     [key: string]: any;
     constructor?: new (url: string, protocols?: string | string[]) => WebSocket;
     maxReconnectionDelay?: number;

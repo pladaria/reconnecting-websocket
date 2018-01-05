@@ -27,8 +27,7 @@ interface ReconnectingWebsocket extends WebSocket {
     [key: string]: any;
 };
 
-const isWebSocket = (constructor: any) =>
-    constructor && constructor.CLOSING === 2;
+const isWebSocket = (constructor: any): boolean => constructor && constructor.CLOSING === 2;
 
 const isGlobalWebSocket = () =>
     typeof WebSocket !== 'undefined' && isWebSocket(WebSocket);
@@ -62,23 +61,20 @@ const updateReconnectionDelay = (config: Options, previousDelay: number) => {
         : newDelay;
 };
 
-const LEVEL_0_EVENTS = ['onopen', 'onclose', 'onmessage', 'onerror'];
-
-const reassignEventListeners = (ws: ReconnectingWebsocket, oldWs: ReconnectingWebsocket, listeners: EventListeners) => {
+const reassignEventListeners = (ws: WebSocket, rws: ReconnectingWebsocket, listeners: EventListeners) => {
     Object.keys(listeners).forEach(type => {
         listeners[type].forEach(([listener, options]) => {
             ws.addEventListener(type, listener, options);
         });
     });
-    if (oldWs) {
-        LEVEL_0_EVENTS.forEach(name => {
-            ws[name] = oldWs[name];
-        });
-    }
+    ws.onopen = rws.onopen.bind(rws)
+    ws.onerror = rws.onerror.bind(rws)
+    ws.onmessage = rws.onmessage.bind(rws)
+    ws.onclose = rws.onclose.bind(rws)
 };
 
 const ReconnectingWebsocket = function(
-    url: Promise<string>,
+    url: string | (() => Promise<string>),
     protocols?: string | string[],
     options = <Options>{}
 ) {
@@ -106,6 +102,16 @@ const ReconnectingWebsocket = function(
     }
 
     const log = config.debug ? (...params: any[]) => console.log('RWS:', ...params) : () => {};
+
+    const ctor = config.constructor as any
+    this.CONNECTING = ctor.CONNECTING;
+    this.OPEN = ctor.OPEN;
+    this.CLOSING = ctor.CLOSING;
+    this.CLOSED = ctor.CLOSED;
+
+    // Temporarily set these until we have an underlying ws instance.
+    this.readyState = this.CONNECTING;
+    this.protocol = protocols;
 
     /**
      * Not using dispatchEvent, otherwise we must use a DOM Event object
@@ -148,8 +154,9 @@ const ReconnectingWebsocket = function(
         }
 
         log('connect');
-        const oldWs = ws;
-        return url.then((connectionUrl: string) => {
+
+        const urlPromise = (typeof url === 'string') ? Promise.resolve(url) : url()
+        return urlPromise.then((connectionUrl: string) => {
             ws = new (<any>config.constructor)(connectionUrl, protocols);
 
             connectingTimeout = setTimeout(() => {
@@ -159,11 +166,11 @@ const ReconnectingWebsocket = function(
             }, config.connectionTimeout);
 
             log('bypass properties');
-            for (let key in ws) {
-                // @todo move to constant
-                if (['addEventListener', 'removeEventListener', 'close', 'send'].indexOf(key) < 0) {
-                    bypassProperty(ws, this, key);
-                }
+
+            // @todo move to constant
+            const bypassedProperties = ['url', 'protocol', 'readyState', 'bufferedAmount'];
+            for (const key of bypassedProperties) {
+                bypassProperty(ws, this, key);
             }
 
             ws.addEventListener('open', () => {
@@ -175,9 +182,9 @@ const ReconnectingWebsocket = function(
             });
 
             ws.addEventListener('close', handleClose);
-
-            reassignEventListeners(ws, oldWs, listeners);
-
+        
+            reassignEventListeners(ws, this, listeners);
+           
             // because when closing with fastClose=true, it is saved and set to null to avoid double calls
             ws.onclose = ws.onclose || savedOnClose;
             savedOnClose = null;
@@ -185,9 +192,10 @@ const ReconnectingWebsocket = function(
             return ws;
         });
     };
+    // ready is a promise that is resolved when the underlying websocket is initialized
+    this.ready = connect().then(() => this);
 
     log('init');
-    connect();
 
     this.close = (code = 1000, reason = '', {keepClosed = false, fastClose = true, delay = 0} = {}) => {
         log('close - params:', {reason, keepClosed, fastClose, delay, retriesCount, maxRetries: config.maxRetries});
@@ -197,7 +205,7 @@ const ReconnectingWebsocket = function(
             reconnectDelay = delay;
         }
 
-        ws.close(code, reason);
+        if (ws) ws.close(code, reason);
 
         if (fastClose) {
             const fakeCloseEvent = <CloseEvent>{
@@ -210,21 +218,24 @@ const ReconnectingWebsocket = function(
             // and remove them from the WS instance so they
             // don't get fired on the real close.
             handleClose();
-            ws.removeEventListener('close', handleClose);
 
-            // run and remove level2
-            if (Array.isArray(listeners.close)) {
-                listeners.close.forEach(([listener, options]) => {
-                    listener(fakeCloseEvent);
-                    ws.removeEventListener('close', listener, options);
-                });
-            }
+            if (ws) {
+                ws.removeEventListener('close', handleClose);
 
-            // run and remove level0
-            if (ws.onclose) {
-                savedOnClose = ws.onclose;
-                ws.onclose(fakeCloseEvent);
-                ws.onclose = null;
+                // run and remove level2
+                if (Array.isArray(listeners.close)) {
+                    listeners.close.forEach(([listener, options]) => {
+                        listener(fakeCloseEvent);
+                        ws.removeEventListener('close', listener, options);
+                    });
+                }
+
+                // run and remove level0
+                if (ws.onclose) {
+                    savedOnClose = ws.onclose;
+                    ws.onclose(fakeCloseEvent);
+                    ws.onclose = null;
+                }
             }
         }
     };
@@ -232,6 +243,25 @@ const ReconnectingWebsocket = function(
     this.send = (data: any) => {
         ws.send(data)
     };
+
+    // Define Level 0 event stubs
+    const level0Listeners: any = {
+        onopen: () => {},
+        onmessage: () => {},
+        onclose: () => {},
+        onerror: () => {},
+    };
+
+    ['onopen', 'onerror', 'onmessage', 'onclose'].forEach((type: string) => {
+        Object.defineProperty(this, type, {
+            get: () => level0Listeners[type],
+            set: (v) => {
+                // Set it on this and also set it on the underlying ws if there is one.
+                level0Listeners[type] = v;
+                if (ws) (ws as any)[type] = v;
+            }
+        })
+    });
 
     this.addEventListener = (type: string, listener: EventListener, options: any) => {
         if (Array.isArray(listeners[type])) {
@@ -241,14 +271,14 @@ const ReconnectingWebsocket = function(
         } else {
             listeners[type] = [[listener, options]];
         }
-        ws.addEventListener(type, listener, options);
+        if (ws) ws.addEventListener(type, listener, options);
     };
 
     this.removeEventListener = (type: string, listener: EventListener, options: any) => {
         if (Array.isArray(listeners[type])) {
             listeners[type] = listeners[type].filter(([l]) => l !== listener);
         }
-        ws.removeEventListener(type, listener, options);
+        if (ws) ws.removeEventListener(type, listener, options);
     };
 
 };
