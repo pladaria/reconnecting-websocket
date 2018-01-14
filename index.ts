@@ -142,7 +142,7 @@ const ReconnectingWebsocket = function(
         }
     };
 
-    const connect = (retryOnTimeout: boolean) => {
+    const connect = (retryOnTimeout?: boolean) => {
         if (!shouldRetry) {
             return;
         }
