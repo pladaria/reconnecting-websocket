@@ -138,11 +138,11 @@ const ReconnectingWebsocket = function(
         log('handleClose - reconnectDelay:', reconnectDelay);
 
         if (shouldRetry) {
-            setTimeout(connect, reconnectDelay);
+            setTimeout(connect, reconnectDelay, true);
         }
     };
 
-    const connect = () => {
+    const connect = (retryOnTimeout: boolean) => {
         if (!shouldRetry) {
             return;
         }
@@ -156,6 +156,10 @@ const ReconnectingWebsocket = function(
             log('timeout');
             ws.close();
             emitError('ETIMEDOUT', 'Connection timeout');
+
+            if(retryOnTimeout) {
+                handleClose();
+            }
         }, config.connectionTimeout);
 
         log('bypass properties');
