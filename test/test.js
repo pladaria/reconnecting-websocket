@@ -211,7 +211,7 @@ test.skip.cb('connection timeout', t => {
         t.fail(data.toString());
     });
 
-    proc.stdout.on('data', (data) => {
+    proc.stdout.on('data', () => {
         const ws = new RWS(`ws://localhost:${PORT_UNRESPONSIVE}`, null, {
             constructor: HWS,
             connectionTimeout: 100,
