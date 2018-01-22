@@ -231,6 +231,25 @@ test.skip.cb('connection timeout', t => {
     });
 });
 
+test.cb('immediatly-failed connection should not timeout', (t) => {
+    const ws = new RWS('ws://thiswillfail.com', null, {
+        constructor: HWS,
+        maxRetries: 2,
+        connectionTimeout: 500,
+    });
+
+    ws.addEventListener('error', (err) => {
+        console.log(err.code);
+        if (err.code === 'ETIMEDOUT') {
+            t.fail();
+            t.end();
+        }
+        if (err.code === 'EHOSTDOWN') {
+            t.end();
+        }
+    });
+})
+
 test.cb('connect, send, receive, close {fastClose: false}', t => {
     const anyMessageText = 'hello';
     const anyProtocol = 'foobar';
