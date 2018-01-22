@@ -123,6 +123,9 @@ const ReconnectingWebsocket = function(
     }, 0);
 
     const handleClose = () => {
+        clearTimeout(connectingTimeout);
+        connectingTimeout = null;
+
         log('handleClose', {shouldRetry});
         retriesCount++;
         log('retries count:', retriesCount);

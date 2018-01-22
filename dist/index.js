@@ -95,6 +95,8 @@ var ReconnectingWebsocket = function (url, protocols, options) {
         }
     }, 0); };
     var handleClose = function () {
+        clearTimeout(connectingTimeout);
+        connectingTimeout = null;
         log('handleClose', { shouldRetry: shouldRetry });
         retriesCount++;
         log('retries count:', retriesCount);

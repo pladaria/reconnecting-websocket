@@ -203,7 +203,7 @@ test.cb('level2 event listeners (addEventListener, removeEventListener)', t => {
     });
 });
 
-test.skip.cb('connection timeout', t => {
+test.cb('connection timeout', t => {
     const spawn = require('child_process').spawn;
     const proc = spawn('node', [`${__dirname}/unresponsive-server.js`, String(PORT_UNRESPONSIVE)]);
 
@@ -211,7 +211,7 @@ test.skip.cb('connection timeout', t => {
         t.fail(data.toString());
     });
 
-    proc.stdout.on('data', () => {
+    proc.stdout.once('data', (data) => {
         const ws = new RWS(`ws://localhost:${PORT_UNRESPONSIVE}`, null, {
             constructor: HWS,
             connectionTimeout: 100,
@@ -230,6 +230,25 @@ test.skip.cb('connection timeout', t => {
         });
     });
 });
+
+test.cb('immediatly-failed connection should not timeout', (t) => {
+    const ws = new RWS('ws://thiswillfail.com', null, {
+        constructor: HWS,
+        maxRetries: 2,
+        connectionTimeout: 500,
+    });
+
+    ws.addEventListener('error', (err) => {
+        console.log(err.code);
+        if (err.code === 'ETIMEDOUT') {
+            t.fail();
+            t.end();
+        }
+        if (err.code === 'EHOSTDOWN') {
+            t.end();
+        }
+    });
+})
 
 test.cb('connect, send, receive, close {fastClose: false}', t => {
     const anyMessageText = 'hello';
