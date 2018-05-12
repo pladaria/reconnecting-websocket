@@ -1,6 +1,6 @@
+.npmrc
 .nyc_output
+.nyc_output
+coverage
 test
-coverage
-coverage
-.nyc_output
 yarn.lock
