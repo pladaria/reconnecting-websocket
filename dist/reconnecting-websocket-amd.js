@@ -1,5 +1,4 @@
-var ReconnectingWebSocket = (function () {
-    'use strict';
+define(function () { 'use strict';
 
     class Event {
         constructor(type, target) {
@@ -363,4 +362,4 @@ var ReconnectingWebSocket = (function () {
 
     return ReconnectingWebSocket;
 
-}());
+});

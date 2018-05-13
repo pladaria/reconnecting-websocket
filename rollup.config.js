@@ -10,6 +10,11 @@ export default {
             name: 'ReconnectingWebSocket',
         },
         {
+            file: 'dist/reconnecting-websocket-amd.js',
+            format: 'amd',
+            name: 'ReconnectingWebSocket',
+        },
+        {
             file: 'dist/reconnecting-websocket-cjs.js',
             format: 'cjs',
         },

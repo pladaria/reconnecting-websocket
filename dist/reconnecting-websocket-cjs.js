@@ -53,6 +53,7 @@ class ReconnectingWebSocket {
         this._retryCount = -1;
         this._shouldReconnect = true;
         this._connectLock = false;
+        this._binaryType = 'blob';
         this.eventToHandler = new Map([
             ['open', this._handleOpen.bind(this)],
             ['close', this._handleClose.bind(this)],
@@ -107,6 +108,16 @@ class ReconnectingWebSocket {
     }
     get CLOSED() {
         return ReconnectingWebSocket.CLOSED;
+    }
+    get binaryType() {
+        return this._ws ? this._ws.binaryType : this._binaryType;
+    }
+    set binaryType(value) {
+        this._binaryType = value;
+        if (this._ws) {
+            // @ts-ignore
+            this._ws.binaryType = value;
+        }
     }
     /**
      * Returns the number or connection retries
@@ -208,7 +219,8 @@ class ReconnectingWebSocket {
         let delay = 0;
         if (this._retryCount > 0) {
             const { reconnectionDelayGrowFactor = DEFAULT.reconnectionDelayGrowFactor, minReconnectionDelay = DEFAULT.minReconnectionDelay, maxReconnectionDelay = DEFAULT.maxReconnectionDelay, } = this._options;
-            delay = minReconnectionDelay + Math.pow(this._retryCount - 1, reconnectionDelayGrowFactor);
+            delay =
+                minReconnectionDelay + Math.pow(this._retryCount - 1, reconnectionDelayGrowFactor);
             if (delay > maxReconnectionDelay) {
                 delay = maxReconnectionDelay;
             }
@@ -260,6 +272,8 @@ class ReconnectingWebSocket {
             .then(url => {
             this._debug('connect', { url, protocols: this._protocols });
             this._ws = new WebSocket(url, this._protocols);
+            // @ts-ignore
+            this._ws.binaryType = this._binaryType;
             this._connectLock = false;
             this._addListeners();
             this._connectTimeout = setTimeout(() => this._handleTimeout(), connectionTimeout);
@@ -275,17 +289,12 @@ class ReconnectingWebSocket {
             return;
         }
         this._removeListeners();
-        if (this._ws.readyState === this.CLOSED) {
-            return;
-        }
         try {
             this._ws.close(code, reason);
             this._handleClose(new CloseEvent(code, reason, this));
         }
         catch (error) {
-            if (reason !== 'timeout') {
-                this._handleError(new ErrorEvent(error, this));
-            }
+            // ignore
         }
     }
     _acceptOpen() {
@@ -296,6 +305,9 @@ class ReconnectingWebSocket {
         const { minUptime = DEFAULT.minUptime } = this._options;
         clearTimeout(this._connectTimeout);
         this._uptimeTimeout = setTimeout(this._acceptOpen, minUptime);
+        this._debug('assign binary type');
+        // @ts-ignore
+        this._ws.binaryType = this._binaryType;
         if (this.onopen) {
             this.onopen(event);
         }

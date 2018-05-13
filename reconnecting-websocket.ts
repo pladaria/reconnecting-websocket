@@ -22,8 +22,8 @@ export type Options = {
     WebSocket?: any;
     maxReconnectionDelay?: number;
     minReconnectionDelay?: number;
-    minUptime?: number;
     reconnectionDelayGrowFactor?: number;
+    minUptime?: number;
     connectionTimeout?: number;
     maxRetries?: number;
     debug?: boolean;
@@ -42,16 +42,17 @@ const DEFAULT = {
 export type UrlProvider = string | (() => string) | (() => Promise<string>);
 
 export default class ReconnectingWebSocket {
-    private _ws: WebSocket | undefined;
+    private _ws?: WebSocket;
     private _listeners: {[type: string]: EventListener[]} = {};
     private _retryCount = -1;
     private _uptimeTimeout: any;
     private _connectTimeout: any;
     private _shouldReconnect = true;
     private _connectLock = false;
+    private _binaryType = 'blob';
 
     private readonly _url: UrlProvider;
-    private readonly _protocols: string | string[] | undefined;
+    private readonly _protocols?: string | string[];
     private readonly _options: Options;
 
     private readonly eventToHandler = new Map<keyof WebSocketEventMap, any>([
@@ -61,7 +62,7 @@ export default class ReconnectingWebSocket {
         ['message', this._handleMessage.bind(this)],
     ]);
 
-    constructor(url: UrlProvider, protocols: string | string[] | undefined, options: Options = {}) {
+    constructor(url: UrlProvider, protocols?: string | string[], options: Options = {}) {
         this._url = url;
         this._protocols = protocols;
         this._options = options;
@@ -95,6 +96,18 @@ export default class ReconnectingWebSocket {
     }
     get CLOSED() {
         return ReconnectingWebSocket.CLOSED;
+    }
+
+    get binaryType(): string {
+        return this._ws ? this._ws.binaryType : this._binaryType;
+    }
+
+    set binaryType(value: string) {
+        this._binaryType = value;
+        if (this._ws) {
+            // @ts-ignore
+            this._ws.binaryType = value;
+        }
     }
 
     /**
@@ -148,29 +161,29 @@ export default class ReconnectingWebSocket {
     /**
      * An event listener to be called when the WebSocket connection's readyState changes to CLOSED
      */
-    public onclose: ((event: CloseEvent) => undefined) | undefined = undefined;
+    public onclose?: (event: CloseEvent) => undefined = undefined;
 
     /**
      * An event listener to be called when an error occurs
      */
-    public onerror: ((event: Event) => undefined) | undefined = undefined;
+    public onerror?: (event: Event) => undefined = undefined;
 
     /**
      * An event listener to be called when a message is received from the server
      */
-    public onmessage: ((event: MessageEvent) => undefined) | undefined = undefined;
+    public onmessage?: (event: MessageEvent) => undefined = undefined;
 
     /**
      * An event listener to be called when the WebSocket connection's readyState changes to OPEN;
      * this indicates that the connection is ready to send and receive data
      */
-    public onopen: ((event: Event) => undefined) | undefined = undefined;
+    public onopen?: (event: Event) => undefined = undefined;
 
     /**
      * Closes the WebSocket connection or connection attempt, if any. If the connection is already
      * CLOSED, this method does nothing
      */
-    public close(code?: number, reason?: string): void {
+    public close(code?: number, reason?: string) {
         this._shouldReconnect = false;
         if (!this._ws || this._ws.readyState === this.CLOSED) {
             return;
@@ -182,7 +195,7 @@ export default class ReconnectingWebSocket {
      * Closes the WebSocket connection or connection attempt and connects again.
      * Resets retry counter;
      */
-    public reconnect(code?: number, reason?: string): void {
+    public reconnect(code?: number, reason?: string) {
         this._shouldReconnect = true;
         this._retryCount = -1;
         if (!this._ws || this._ws.readyState === this.CLOSED) {
@@ -195,7 +208,7 @@ export default class ReconnectingWebSocket {
     /**
      * Enqueues the specified data to be transmitted to the server over the WebSocket connection
      */
-    public send(data: string | ArrayBuffer | Blob | ArrayBufferView): void {
+    public send(data: string | ArrayBuffer | Blob | ArrayBufferView) {
         if (this._ws) {
             this._ws.send(data);
         }
@@ -235,7 +248,8 @@ export default class ReconnectingWebSocket {
                 maxReconnectionDelay = DEFAULT.maxReconnectionDelay,
             } = this._options;
 
-            delay = minReconnectionDelay + Math.pow(this._retryCount - 1, reconnectionDelayGrowFactor);
+            delay =
+                minReconnectionDelay + Math.pow(this._retryCount - 1, reconnectionDelayGrowFactor);
             if (delay > maxReconnectionDelay) {
                 delay = maxReconnectionDelay;
             }
@@ -298,6 +312,8 @@ export default class ReconnectingWebSocket {
             .then(url => {
                 this._debug('connect', {url, protocols: this._protocols});
                 this._ws = new WebSocket(url, this._protocols);
+                // @ts-ignore
+                this._ws!.binaryType = this._binaryType;
                 this._connectLock = false;
                 this._addListeners();
                 this._connectTimeout = setTimeout(() => this._handleTimeout(), connectionTimeout);
@@ -315,16 +331,11 @@ export default class ReconnectingWebSocket {
             return;
         }
         this._removeListeners();
-        if (this._ws.readyState === this.CLOSED) {
-            return;
-        }
         try {
             this._ws.close(code, reason);
             this._handleClose(new CloseEvent(code, reason, this));
         } catch (error) {
-            if (reason !== 'timeout') {
-                this._handleError(new ErrorEvent(error, this));
-            }
+            // ignore
         }
     }
 
@@ -338,6 +349,10 @@ export default class ReconnectingWebSocket {
 
         clearTimeout(this._connectTimeout);
         this._uptimeTimeout = setTimeout(this._acceptOpen, minUptime);
+
+        this._debug('assign binary type');
+        // @ts-ignore
+        this._ws!.binaryType = this._binaryType;
 
         if (this.onopen) {
             this.onopen(event);

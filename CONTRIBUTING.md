@@ -1,9 +1,11 @@
+# Contributing
+
 Hello, thank you for your interest in contributing to this repository
 
-Please follow these guidelines:
+# Guidelines
 
-*   Use `npm` as dependency manager
+*   Use `npm` as package manager
+*   Test your feature/bugfix and keep full coverage. You can execute `npm test && npm run report` to
+    see the test coverage report
+*   Update `README.md` if needed
 *   Do not skip pre-commit hook
-*   Add tests to your feature/bugfix and keep full coverage. Execute `npm test && npm run report` to see the
-    test coverage report
-*   Update documentation if needed

@@ -65,6 +65,7 @@ test.cb('getters when not ready', t => {
     t.is(ws.protocol, '');
     t.is(ws.url, '');
     t.is(ws.extensions, '');
+    t.is(ws.binaryType, 'blob');
 
     ws.onerror = () => {
         t.pass();
@@ -225,8 +226,7 @@ test.cb('connection timeout', t => {
         lock = true;
 
         const ws = new ReconnectingWebSocket(`ws://localhost:${PORT_UNRESPONSIVE}`, null, {
-            minReconnectionDelay: 500,
-            maxReconnectionDelay: 500,
+            minReconnectionDelay: 50,
             connectionTimeout: 500,
             maxRetries: 1,
         });
@@ -247,12 +247,32 @@ test.cb('connection timeout', t => {
 test.cb('getters', t => {
     const anyProtocol = 'foobar';
     const wss = new WebSocketServer({port: PORT});
-    const ws = new ReconnectingWebSocket(URL, anyProtocol, {});
+    const ws = new ReconnectingWebSocket(URL, anyProtocol, {maxReconnectionDelay: 100});
 
     ws.addEventListener('open', () => {
         t.is(ws.protocol, anyProtocol);
         t.is(ws.extensions, '');
         t.is(ws.bufferedAmount, 0);
+        t.is(ws.binaryType, 'nodebuffer');
+        ws.close();
+    });
+
+    ws.addEventListener('close', () => {
+        wss.close();
+        setTimeout(() => t.end(), 500);
+    });
+});
+
+test.cb('binaryType', t => {
+    const wss = new WebSocketServer({port: PORT});
+    const ws = new ReconnectingWebSocket(URL, undefined, {minReconnectionDelay: 0});
+
+    t.is(ws.binaryType, 'blob');
+    ws.binaryType = 'arraybuffer';
+    ws.addEventListener('open', () => {
+        t.is(ws.binaryType, 'arraybuffer', 'assigned after open');
+        ws.binaryType = 'nodebuffer';
+        t.is(ws.binaryType, 'nodebuffer');
         ws.close();
     });
 
@@ -303,6 +323,9 @@ test.cb('connect, send, receive, close', t => {
         ws.on('message', msg => {
             ws.send(msg);
         });
+    });
+    wss.on('error', () => {
+        t.fail();
     });
 
     t.plan(7);

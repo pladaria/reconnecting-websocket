@@ -3,26 +3,27 @@ export declare type Options = {
     WebSocket?: any;
     maxReconnectionDelay?: number;
     minReconnectionDelay?: number;
-    minUptime?: number;
     reconnectionDelayGrowFactor?: number;
+    minUptime?: number;
     connectionTimeout?: number;
     maxRetries?: number;
     debug?: boolean;
 };
 export declare type UrlProvider = string | (() => string) | (() => Promise<string>);
 export default class ReconnectingWebSocket {
-    private _ws;
+    private _ws?;
     private _listeners;
     private _retryCount;
     private _uptimeTimeout;
     private _connectTimeout;
     private _shouldReconnect;
     private _connectLock;
+    private _binaryType;
     private readonly _url;
-    private readonly _protocols;
+    private readonly _protocols?;
     private readonly _options;
     private readonly eventToHandler;
-    constructor(url: UrlProvider, protocols: string | string[] | undefined, options?: Options);
+    constructor(url: UrlProvider, protocols?: string | string[], options?: Options);
     static readonly CONNECTING: number;
     static readonly OPEN: number;
     static readonly CLOSING: number;
@@ -31,6 +32,7 @@ export default class ReconnectingWebSocket {
     readonly OPEN: number;
     readonly CLOSING: number;
     readonly CLOSED: number;
+    binaryType: string;
     /**
      * Returns the number or connection retries
      */
@@ -64,20 +66,20 @@ export default class ReconnectingWebSocket {
     /**
      * An event listener to be called when the WebSocket connection's readyState changes to CLOSED
      */
-    onclose: ((event: CloseEvent) => undefined) | undefined;
+    onclose?: (event: CloseEvent) => undefined;
     /**
      * An event listener to be called when an error occurs
      */
-    onerror: ((event: Event) => undefined) | undefined;
+    onerror?: (event: Event) => undefined;
     /**
      * An event listener to be called when a message is received from the server
      */
-    onmessage: ((event: MessageEvent) => undefined) | undefined;
+    onmessage?: (event: MessageEvent) => undefined;
     /**
      * An event listener to be called when the WebSocket connection's readyState changes to OPEN;
      * this indicates that the connection is ready to send and receive data
      */
-    onopen: ((event: Event) => undefined) | undefined;
+    onopen?: (event: Event) => undefined;
     /**
      * Closes the WebSocket connection or connection attempt, if any. If the connection is already
      * CLOSED, this method does nothing
