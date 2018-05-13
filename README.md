@@ -143,15 +143,16 @@ removeEventListener(type:  'open' | 'close' | 'message' | 'error', listener: Eve
 
 ```typescript
 binaryType: string;
-bufferedAmount: number; // read only
+bufferedAmount: number;
 extensions: string;
 onclose: EventListener;
 onerror: EventListener;
 onmessage: EventListener;
 onopen: EventListener;
 protocol: string;
-readyState: number; // read only
-url: string; // read only
+readyState: number;
+url: string;
+retryCount: number;
 ```
 
 ### Constants
