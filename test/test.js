@@ -410,3 +410,23 @@ test.cb('connect, send, receive, reconnect', t => {
         }
     });
 });
+
+test.cb.only('immediatly-failed connection should not timeout', t => {
+    const ws = new ReconnectingWebSocket('ws://thiswillfail.com', null, {
+        maxRetries: 2,
+        connectionTimeout: 500,
+        debug: 1,
+    });
+
+    ws.addEventListener('error', err => {
+        if (err.message === 'TIMEOUT') {
+            t.fail();
+        }
+        if (ws.retryCount === 2) {
+            setTimeout(() => t.end(), 500);
+        }
+        if (ws.retryCount > 2) {
+            t.fail();
+        }
+    });
+});
