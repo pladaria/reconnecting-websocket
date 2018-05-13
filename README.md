@@ -1,7 +1,7 @@
 # Reconnecting WebSocket
 
 [![Build Status](https://travis-ci.org/pladaria/reconnecting-websocket.svg?branch=master)](https://travis-ci.org/pladaria/reconnecting-websocket)
-[![Coverage Status](https://coveralls.io/repos/github/pladaria/reconnecting-websocket/badge.svg?branch=master)](https://coveralls.io/github/pladaria/reconnecting-websocket?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/pladaria/reconnecting-websocket/badge.svg?branch=master&v=1)](https://coveralls.io/github/pladaria/reconnecting-websocket?branch=master)
 
 WebSocket that will automatically reconnect if the connection is closed.
 
