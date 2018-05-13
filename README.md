@@ -82,8 +82,8 @@ const rws = new ReconnectingWebSocket(urlProvider);
 #### Sample with custom options
 
 ```javascript
-const ReconnectingWebSocket = require('reconnecting-websocket');
-const WS = require('ws');
+import ReconnectingWebSocket from 'reconnecting-websocket';
+import WS from 'ws';
 
 const options = {
     WebSocket: WS, // custom WebSocket constructor
