@@ -61,7 +61,7 @@
   "homepage": "https://github.com/pladaria/reconnecting-websocket#readme",
   "lint-staged": {
     "linters": {
-      "./*.{js,md,ts}": [
+      "*.{js,md,ts}, !dist/*": [
         "prettier --write",
         "git add"
       ]
