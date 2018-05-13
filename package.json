@@ -2,16 +2,18 @@
   "name": "reconnecting-websocket",
   "version": "3.2.2",
   "description": "Reconnecting WebSocket",
-  "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "main": "./dist/reconnecting-websocket-cjs.js",
+  "module": "./dist/reconnecting-websocket.mjs",
+  "types": "./dist/reconnecting-websocket.d.ts",
   "scripts": {
-    "build": "tsc",
-    "build-amd": "tsc -m AMD --outFile ./dist/reconnecting-websocket.amd.js",
+    "build": "npm run clean && rollup -c && uglifyjs --compress --mangle -o dist/reconnecting-websocket-iife.min.js dist/reconnecting-websocket-iife.js",
     "test": "nyc --reporter=text-summary --reporter=lcov ava --verbose --serial test/test.js",
-    "clean": "rimraf dist",
+    "clean": "del dist && del coverage && del .nyc_output",
     "report": "nyc report --reporter=html && opn coverage/index.html",
-    "prepublish": "npm run clean && npm run build && npm run build-amd && npm test",
-    "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls"
+    "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls",
+    "lint": "tslint *.ts",
+    "precommit": "lint-staged",
+    "prepublishOnly": "npm run clean && npm run lint && npm run build && npm test"
   },
   "keywords": [
     "websocket",
@@ -27,14 +29,20 @@
   "author": "Pedro Ladaria <pedro.ladaria@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "ava": "^0.22.0",
+    "ava": "^0.25.0",
     "coveralls": "^3.0.0",
-    "html5-websocket": "^2.0.1",
-    "nyc": "^11.2.1",
+    "del-cli": "^1.1.0",
+    "husky": "^0.14.3",
+    "lint-staged": "^7.1.0",
+    "nyc": "^11.7.3",
     "opn-cli": "^3.1.0",
-    "rimraf": "^2.6.2",
-    "typescript": "^2.5.3",
-    "ws": "^3.2.0"
+    "prettier": "^1.12.1",
+    "rollup": "^0.58.2",
+    "rollup-plugin-typescript2": "^0.14.0",
+    "tslint": "^5.10.0",
+    "typescript": "^2.8.3",
+    "uglify-es": "^3.3.9",
+    "ws": "^5.1.1"
   },
   "dependencies": {},
   "directories": {
@@ -50,5 +58,13 @@
   "publishConfig": {
     "registry": "https://registry.npmjs.org"
   },
-  "homepage": "https://github.com/pladaria/reconnecting-websocket#readme"
+  "homepage": "https://github.com/pladaria/reconnecting-websocket#readme",
+  "lint-staged": {
+    "linters": {
+      "./*.{js,md,ts}": [
+        "prettier --write",
+        "git add"
+      ]
+    }
+  }
 }

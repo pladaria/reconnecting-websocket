@@ -1,16 +1,9 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
-        "target": "es5",
-        "sourceMap": false,
-        "outDir": "dist",
-        "declaration": true,
-        "moduleResolution": "node",
-        "noImplicitAny": true
-    },
-    "exclude": [
-        "node_modules",
-        "dist",
-        "test"
-    ]
+        "alwaysStrict": true,
+        "module": "esnext",
+        "strict": true,
+        "target": "esnext",
+        "declaration": true
+    }
 }
