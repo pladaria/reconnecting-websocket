@@ -12,7 +12,7 @@ server.listen(port, () => {
     console.log('listening:', port, 'sleep:', sleepTime);
     const time = Date.now();
     while (Date.now() - time < sleepTime) {
-        // burn cpu
+        // 🔥🔥🔥 burn cpu 🔥🔥🔥
     }
     server.close();
     console.log('bye');
