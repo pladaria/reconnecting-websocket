@@ -415,7 +415,6 @@ test.cb('immediatly-failed connection should not timeout', t => {
     const ws = new ReconnectingWebSocket('ws://thiswillfail.com', null, {
         maxRetries: 2,
         connectionTimeout: 500,
-        debug: 1,
     });
 
     ws.addEventListener('error', err => {
