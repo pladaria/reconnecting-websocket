@@ -422,7 +422,7 @@ test.cb('immediatly-failed connection should not timeout', t => {
             t.fail();
         }
         if (ws.retryCount === 2) {
-            setTimeout(() => t.end(), 500);
+            setTimeout(() => t.end(), 1500);
         }
         if (ws.retryCount > 2) {
             t.fail();
