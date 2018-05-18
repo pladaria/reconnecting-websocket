@@ -305,7 +305,7 @@ var ReconnectingWebSocket = (function () {
             this._debug('open event');
             const { minUptime = DEFAULT.minUptime } = this._options;
             clearTimeout(this._connectTimeout);
-            this._uptimeTimeout = setTimeout(this._acceptOpen, minUptime);
+            this._uptimeTimeout = setTimeout(() => this._acceptOpen(), minUptime);
             this._debug('assign binary type');
             // @ts-ignore
             this._ws.binaryType = this._binaryType;

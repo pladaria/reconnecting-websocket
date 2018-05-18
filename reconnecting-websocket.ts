@@ -348,7 +348,7 @@ export default class ReconnectingWebSocket {
         const {minUptime = DEFAULT.minUptime} = this._options;
 
         clearTimeout(this._connectTimeout);
-        this._uptimeTimeout = setTimeout(this._acceptOpen, minUptime);
+        this._uptimeTimeout = setTimeout(() => this._acceptOpen(), minUptime);
 
         this._debug('assign binary type');
         // @ts-ignore
