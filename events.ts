@@ -27,5 +27,11 @@ export class CloseEvent extends Event {
         this.reason = reason;
     }
 }
+export interface WebSocketEventMap {
+    close: CloseEvent;
+    error: ErrorEvent;
+    message: MessageEvent;
+    open: Event;
+}
 
-export type EventListener = (event: Event) => void;
+export type EventListener = (event: Event | CloseEvent | MessageEvent) => void;

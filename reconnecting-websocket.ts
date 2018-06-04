@@ -4,7 +4,7 @@
  * https://github.com/pladaria/reconnecting-websocket
  * License MIT
  */
-import {CloseEvent, ErrorEvent, Event, EventListener} from './events';
+import {CloseEvent, ErrorEvent, Event, EventListener, WebSocketEventMap} from './events';
 
 const getGlobalWebSocket = (): WebSocket | undefined => {
     if (typeof WebSocket !== 'undefined') {
@@ -41,9 +41,20 @@ const DEFAULT = {
 
 export type UrlProvider = string | (() => string) | (() => Promise<string>);
 
+export type ListenersMap = {
+    error: ((event: ErrorEvent) => void)[],
+    message: ((event: MessageEvent) => void)[],
+    open: ((event: Event) => void)[],
+    close: ((event: CloseEvent) => void)[],
+}
 export default class ReconnectingWebSocket {
     private _ws?: WebSocket;
-    private _listeners: {[type: string]: EventListener[]} = {};
+    private _listeners: ListenersMap = {
+        error: [],
+        message: [],
+        open: [],
+        close: [],
+    };
     private _retryCount = -1;
     private _uptimeTimeout: any;
     private _connectTimeout: any;
@@ -66,9 +77,6 @@ export default class ReconnectingWebSocket {
         this._url = url;
         this._protocols = protocols;
         this._options = options;
-        for (const [type] of this.eventToHandler) {
-            this._listeners[type] = [];
-        }
         this._connect();
     }
 
@@ -217,8 +225,9 @@ export default class ReconnectingWebSocket {
     /**
      * Register an event handler of a specific event type
      */
-    public addEventListener(type: keyof WebSocketEventMap, listener: EventListener) {
+    public addEventListener<K extends keyof WebSocketEventMap>(type: K, listener: ((event: WebSocketEventMap[K]) => void)): void {
         if (this._listeners[type]) {
+            // @ts-ignore
             this._listeners[type].push(listener);
         }
     }
@@ -226,8 +235,9 @@ export default class ReconnectingWebSocket {
     /**
      * Removes an event listener
      */
-    public removeEventListener(type: keyof WebSocketEventMap, listener: EventListener) {
+    public removeEventListener<K extends keyof WebSocketEventMap>(type: K, listener: ((event: WebSocketEventMap[K]) => void)): void {
         if (this._listeners[type]) {
+            // @ts-ignore
             this._listeners[type] = this._listeners[type].filter(l => l !== listener);
         }
     }
