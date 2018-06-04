@@ -42,11 +42,11 @@ const DEFAULT = {
 export type UrlProvider = string | (() => string) | (() => Promise<string>);
 
 export type ListenersMap = {
-    error: ((event: ErrorEvent) => void)[],
-    message: ((event: MessageEvent) => void)[],
-    open: ((event: Event) => void)[],
-    close: ((event: CloseEvent) => void)[],
-}
+    error: Array<((event: ErrorEvent) => void)>;
+    message: Array<((event: MessageEvent) => void)>;
+    open: Array<((event: Event) => void)>;
+    close: Array<((event: CloseEvent) => void)>;
+};
 export default class ReconnectingWebSocket {
     private _ws?: WebSocket;
     private _listeners: ListenersMap = {
@@ -225,7 +225,10 @@ export default class ReconnectingWebSocket {
     /**
      * Register an event handler of a specific event type
      */
-    public addEventListener<K extends keyof WebSocketEventMap>(type: K, listener: ((event: WebSocketEventMap[K]) => void)): void {
+    public addEventListener<K extends keyof WebSocketEventMap>(
+        type: K,
+        listener: ((event: WebSocketEventMap[K]) => void),
+    ): void {
         if (this._listeners[type]) {
             // @ts-ignore
             this._listeners[type].push(listener);
@@ -235,7 +238,10 @@ export default class ReconnectingWebSocket {
     /**
      * Removes an event listener
      */
-    public removeEventListener<K extends keyof WebSocketEventMap>(type: K, listener: ((event: WebSocketEventMap[K]) => void)): void {
+    public removeEventListener<K extends keyof WebSocketEventMap>(
+        type: K,
+        listener: ((event: WebSocketEventMap[K]) => void),
+    ): void {
         if (this._listeners[type]) {
             // @ts-ignore
             this._listeners[type] = this._listeners[type].filter(l => l !== listener);
