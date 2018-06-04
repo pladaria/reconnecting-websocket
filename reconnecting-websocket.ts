@@ -161,23 +161,23 @@ export default class ReconnectingWebSocket {
     /**
      * An event listener to be called when the WebSocket connection's readyState changes to CLOSED
      */
-    public onclose?: (event: CloseEvent) => undefined = undefined;
+    public onclose?: (event: CloseEvent) => void = undefined;
 
     /**
      * An event listener to be called when an error occurs
      */
-    public onerror?: (event: Event) => undefined = undefined;
+    public onerror?: (event: Event) => void = undefined;
 
     /**
      * An event listener to be called when a message is received from the server
      */
-    public onmessage?: (event: MessageEvent) => undefined = undefined;
+    public onmessage?: (event: MessageEvent) => void = undefined;
 
     /**
      * An event listener to be called when the WebSocket connection's readyState changes to OPEN;
      * this indicates that the connection is ready to send and receive data
      */
-    public onopen?: (event: Event) => undefined = undefined;
+    public onopen?: (event: Event) => void = undefined;
 
     /**
      * Closes the WebSocket connection or connection attempt, if any. If the connection is already

@@ -28,4 +28,4 @@ export class CloseEvent extends Event {
     }
 }
 
-export type EventListener = (event: Event) => undefined;
+export type EventListener = (event: Event) => void;
