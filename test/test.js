@@ -445,7 +445,7 @@ test.cb('connect, send, receive, reconnect', t => {
     });
 });
 
-test.cb('immediatly-failed connection should not timeout', t => {
+test.cb('immediately-failed connection should not timeout', t => {
     const ws = new ReconnectingWebSocket('ws://thiswillfail.com', null, {
         maxRetries: 2,
         connectionTimeout: 500,
@@ -461,6 +461,27 @@ test.cb('immediatly-failed connection should not timeout', t => {
         if (ws.retryCount > 2) {
             t.fail();
         }
+    });
+});
+
+test.cb('immediately-failed connection with 0 maxRetries must not retry', t => {
+    const ws = new ReconnectingWebSocket('ws://thiswillfail.com', [], {
+        maxRetries: 0,
+        connectionTimeout: 500,
+        minReconnectionDelay: 100,
+        maxReconnectionDelay: 200,
+    });
+
+    let i = 0;
+    ws.addEventListener('error', err => {
+        i++;
+        if (err.message === 'TIMEOUT') {
+            t.fail();
+        }
+        if (i > 1) {
+            t.fail();
+        }
+        setTimeout(() => t.end(), 500);
     });
 });
 
