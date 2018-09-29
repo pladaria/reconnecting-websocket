@@ -13,7 +13,7 @@ WebSocket that will automatically reconnect if the connection is closed.
 *   Dependency free (does not depend on Window, DOM or any EventEmitter library)
 *   Handle connection timeouts
 *   Debug mode
-*   AMD build available (see dist folder)
+*   Multiple builds available (see dist folder)
 *   Allows changing server URL between reconnections
 
 ## Install
