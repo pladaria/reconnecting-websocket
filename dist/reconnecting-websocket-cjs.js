@@ -124,6 +124,7 @@ var ReconnectingWebSocket = /** @class */ (function () {
         this._connectLock = false;
         this._binaryType = 'blob';
         this._closeCalled = false;
+        this._messageQueue = [];
         this.eventToHandler = new Map([
             ['open', this._handleOpen.bind(this)],
             ['close', this._handleClose.bind(this)],
@@ -323,7 +324,12 @@ var ReconnectingWebSocket = /** @class */ (function () {
      */
     ReconnectingWebSocket.prototype.send = function (data) {
         if (this._ws) {
+            this._debug('send', data);
             this._ws.send(data);
+        }
+        else {
+            this._debug('enqueue', data);
+            this._messageQueue.push(data);
         }
     };
     /**
@@ -457,6 +463,9 @@ var ReconnectingWebSocket = /** @class */ (function () {
         this._debug('assign binary type');
         // @ts-ignore
         this._ws.binaryType = this._binaryType;
+        // send enqueued messages (messages sent before websocket initialization)
+        this._messageQueue.forEach(function (message) { return _this._ws.send(message); });
+        this._messageQueue = [];
         if (this.onopen) {
             this.onopen(event);
         }

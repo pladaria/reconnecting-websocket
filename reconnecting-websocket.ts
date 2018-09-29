@@ -41,6 +41,8 @@ const DEFAULT = {
 
 export type UrlProvider = string | (() => string) | (() => Promise<string>);
 
+export type Message = string | ArrayBuffer | Blob | ArrayBufferView;
+
 export type ListenersMap = {
     error: Array<((event: ErrorEvent) => void)>;
     message: Array<((event: MessageEvent) => void)>;
@@ -62,6 +64,7 @@ export default class ReconnectingWebSocket {
     private _connectLock = false;
     private _binaryType = 'blob';
     private _closeCalled = false;
+    private _messageQueue: Message[] = [];
 
     private readonly _url: UrlProvider;
     private readonly _protocols?: string | string[];
@@ -223,9 +226,13 @@ export default class ReconnectingWebSocket {
     /**
      * Enqueues the specified data to be transmitted to the server over the WebSocket connection
      */
-    public send(data: string | ArrayBuffer | Blob | ArrayBufferView) {
+    public send(data: Message) {
         if (this._ws) {
+            this._debug('send', data);
             this._ws.send(data);
+        } else {
+            this._debug('enqueue', data);
+            this._messageQueue.push(data);
         }
     }
 
@@ -345,7 +352,10 @@ export default class ReconnectingWebSocket {
                     this._closeCalled = true;
                     this._ws!.close();
                 } else {
-                    this._connectTimeout = setTimeout(() => this._handleTimeout(), connectionTimeout);
+                    this._connectTimeout = setTimeout(
+                        () => this._handleTimeout(),
+                        connectionTimeout,
+                    );
                 }
             });
     }
@@ -383,6 +393,10 @@ export default class ReconnectingWebSocket {
         this._debug('assign binary type');
         // @ts-ignore
         this._ws!.binaryType = this._binaryType;
+
+        // send enqueued messages (messages sent before websocket initialization)
+        this._messageQueue.forEach(message => this._ws!.send(message));
+        this._messageQueue = [];
 
         if (this.onopen) {
             this.onopen(event);

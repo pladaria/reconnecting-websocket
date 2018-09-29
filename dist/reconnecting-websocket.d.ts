@@ -10,6 +10,7 @@ export declare type Options = {
     debug?: boolean;
 };
 export declare type UrlProvider = string | (() => string) | (() => Promise<string>);
+export declare type Message = string | ArrayBuffer | Blob | ArrayBufferView;
 export declare type ListenersMap = {
     error: Array<((event: ErrorEvent) => void)>;
     message: Array<((event: MessageEvent) => void)>;
@@ -26,6 +27,7 @@ export default class ReconnectingWebSocket {
     private _connectLock;
     private _binaryType;
     private _closeCalled;
+    private _messageQueue;
     private readonly _url;
     private readonly _protocols?;
     private readonly _options;
@@ -100,7 +102,7 @@ export default class ReconnectingWebSocket {
     /**
      * Enqueues the specified data to be transmitted to the server over the WebSocket connection
      */
-    send(data: string | ArrayBuffer | Blob | ArrayBufferView): void;
+    send(data: Message): void;
     /**
      * Register an event handler of a specific event type
      */

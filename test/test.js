@@ -457,3 +457,36 @@ test.cb('connect and close before establishing connection', t => {
         t.end();
     }, 1000);
 });
+
+test.cb('enqueue sent messages before websocket initialization', t => {
+    const wss = new WebSocketServer({port: PORT});
+    const ws = new ReconnectingWebSocket(URL);
+
+    const messages = ['message1', 'message2', 'message3'];
+
+    messages.forEach(m => ws.send(m));
+    t.is(ws._messageQueue.length, messages.length);
+
+    let i = 0;
+    wss.on('connection', client => {
+        client.on('message', data => {
+            if (data === 'ok') {
+                t.is(i, messages.length, 'enqueued messages are sent first');
+                ws.close();
+            } else {
+                t.is(data, messages[i]);
+                i++;
+            }
+        });
+    });
+
+    ws.addEventListener('open', () => {
+        ws.send('ok');
+    });
+
+    ws.addEventListener('close', () => {
+        wss.close(() => {
+            t.end();
+        });
+    });
+});
