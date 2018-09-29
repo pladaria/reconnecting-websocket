@@ -415,7 +415,7 @@ export default class ReconnectingWebSocket {
 
     private _handleError(event: ErrorEvent) {
         this._debug('error event', event.message);
-        this._disconnect(undefined, event.message === 'TIMEOUT' ? 'timeout' : undefined);
+        this._disconnect(4008, event.message === 'TIMEOUT' ? 'timeout' : undefined);
 
         if (this.onerror) {
             this.onerror(event);
