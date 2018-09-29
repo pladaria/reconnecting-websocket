@@ -195,7 +195,7 @@ export default class ReconnectingWebSocket {
      * Closes the WebSocket connection or connection attempt, if any. If the connection is already
      * CLOSED, this method does nothing
      */
-    public close(code?: number, reason?: string) {
+    public close(code: number = 1000, reason?: string) {
         this._closeCalled = true;
         this._shouldReconnect = false;
         if (!this._ws) {
@@ -365,7 +365,7 @@ export default class ReconnectingWebSocket {
         this._handleError(new ErrorEvent(Error('TIMEOUT'), this));
     }
 
-    private _disconnect(code?: number, reason?: string) {
+    private _disconnect(code: number = 1000, reason?: string) {
         clearTimeout(this._connectTimeout);
         if (!this._ws) {
             return;
@@ -415,7 +415,7 @@ export default class ReconnectingWebSocket {
 
     private _handleError(event: ErrorEvent) {
         this._debug('error event', event.message);
-        this._disconnect(4008, event.message === 'TIMEOUT' ? 'timeout' : undefined);
+        this._disconnect(undefined, event.message === 'TIMEOUT' ? 'timeout' : undefined);
 
         if (this.onerror) {
             this.onerror(event);
