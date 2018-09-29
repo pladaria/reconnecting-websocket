@@ -298,6 +298,7 @@ var ReconnectingWebSocket = (function () {
          * CLOSED, this method does nothing
          */
         ReconnectingWebSocket.prototype.close = function (code, reason) {
+            if (code === void 0) { code = 1000; }
             this._closeCalled = true;
             this._shouldReconnect = false;
             if (!this._ws) {
@@ -442,6 +443,7 @@ var ReconnectingWebSocket = (function () {
             this._handleError(new ErrorEvent(Error('TIMEOUT'), this));
         };
         ReconnectingWebSocket.prototype._disconnect = function (code, reason) {
+            if (code === void 0) { code = 1000; }
             clearTimeout(this._connectTimeout);
             if (!this._ws) {
                 return;
