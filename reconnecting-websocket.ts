@@ -429,6 +429,10 @@ export default class ReconnectingWebSocket {
     private _handleClose(event: CloseEvent) {
         this._debug('close event');
 
+        if (this._shouldReconnect) {
+            this._connect();
+        }
+
         if (this.onclose) {
             this.onclose(event);
         }

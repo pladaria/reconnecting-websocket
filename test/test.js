@@ -433,8 +433,8 @@ test.cb('immediatly-failed connection should not timeout', t => {
 test.cb('connect and close before establishing connection', t => {
     const wss = new WebSocketServer({port: PORT});
     const ws = new ReconnectingWebSocket(URL, undefined, {
-        minReconnectionDelay: 0,
-        maxReconnectionDelay: 0,
+        minReconnectionDelay: 100,
+        maxReconnectionDelay: 200,
     });
 
     ws.close(); // closing before establishing connection
@@ -488,5 +488,46 @@ test.cb('enqueue sent messages before websocket initialization', t => {
         wss.close(() => {
             t.end();
         });
+    });
+});
+
+test.cb('closing from the other side should reconnect', t => {
+    const wss = new WebSocketServer({port: PORT});
+    const ws = new ReconnectingWebSocket(URL, undefined, {
+        minReconnectionDelay: 100,
+        maxReconnectionDelay: 200,
+    });
+
+    let max = 3;
+    let i = 0;
+    wss.on('connection', client => {
+        i++;
+        if (i < max) {
+            t.pass('closing client from server side should trigger a reconnection');
+            setTimeout(() => client.close(), 100);
+        }
+        if (i === max) {
+            // will close from client side
+        }
+        if (i > max) {
+            t.fail('unexpected connection');
+        }
+    });
+
+    let j = 0;
+    ws.addEventListener('open', () => {
+        j++;
+        if (j === max) {
+            ws.close();
+            // wait a little to ensure no new connections are opened
+            setTimeout(() => {
+                wss.close(() => {
+                    t.end();
+                });
+            }, 500);
+        }
+        if (j > max) {
+            t.fail('unexpected open');
+        }
     });
 });

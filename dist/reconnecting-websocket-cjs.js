@@ -493,6 +493,9 @@ var ReconnectingWebSocket = /** @class */ (function () {
     };
     ReconnectingWebSocket.prototype._handleClose = function (event) {
         this._debug('close event');
+        if (this._shouldReconnect) {
+            this._connect();
+        }
         if (this.onclose) {
             this.onclose(event);
         }
