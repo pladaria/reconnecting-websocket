@@ -16,9 +16,12 @@ define(function () { 'use strict';
     ***************************************************************************** */
     /* global Reflect, Promise */
 
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    var extendStatics = function(d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
 
     function __extends(d, b) {
         extendStatics(d, b);
@@ -499,44 +502,44 @@ define(function () { 'use strict';
          * Remove event listeners to WebSocket instance
          */
         ReconnectingWebSocket.prototype._removeListeners = function () {
+            var e_1, _a;
             if (!this._ws) {
                 return;
             }
             this._debug('removeListeners');
             try {
-                for (var _a = __values(this.eventToHandler), _b = _a.next(); !_b.done; _b = _a.next()) {
-                    var _c = __read(_b.value, 2), type = _c[0], handler = _c[1];
+                for (var _b = __values(this.eventToHandler), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var _d = __read(_c.value, 2), type = _d[0], handler = _d[1];
                     this._ws.removeEventListener(type, handler);
                 }
             }
             catch (e_1_1) { e_1 = { error: e_1_1 }; }
             finally {
                 try {
-                    if (_b && !_b.done && (_d = _a.return)) _d.call(_a);
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
                 finally { if (e_1) throw e_1.error; }
             }
-            var e_1, _d;
         };
         /**
          * Assign event listeners to WebSocket instance
          */
         ReconnectingWebSocket.prototype._addListeners = function () {
+            var e_2, _a;
             this._debug('addListeners');
             try {
-                for (var _a = __values(this.eventToHandler), _b = _a.next(); !_b.done; _b = _a.next()) {
-                    var _c = __read(_b.value, 2), type = _c[0], handler = _c[1];
+                for (var _b = __values(this.eventToHandler), _c = _b.next(); !_c.done; _c = _b.next()) {
+                    var _d = __read(_c.value, 2), type = _d[0], handler = _d[1];
                     this._ws.addEventListener(type, handler);
                 }
             }
             catch (e_2_1) { e_2 = { error: e_2_1 }; }
             finally {
                 try {
-                    if (_b && !_b.done && (_d = _a.return)) _d.call(_a);
+                    if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
                 }
                 finally { if (e_2) throw e_2.error; }
             }
-            var e_2, _d;
         };
         return ReconnectingWebSocket;
     }());

@@ -1,3 +1,9 @@
+/*!
+ * Reconnecting WebSocket
+ * by Pedro Ladaria <pedro.ladaria@gmail.com>
+ * https://github.com/pladaria/reconnecting-websocket
+ * License MIT
+ */
 import { CloseEvent, ErrorEvent, Event, WebSocketEventMap } from './events';
 export declare type Options = {
     WebSocket?: any;
@@ -111,27 +117,27 @@ export default class ReconnectingWebSocket {
      * Removes an event listener
      */
     removeEventListener<K extends keyof WebSocketEventMap>(type: K, listener: ((event: WebSocketEventMap[K]) => void)): void;
-    private _debug(...params);
-    private _getNextDelay();
-    private _wait();
+    private _debug;
+    private _getNextDelay;
+    private _wait;
     /**
      * @return Promise<string>
      */
-    private _getNextUrl(urlProvider);
-    private _connect();
-    private _handleTimeout();
-    private _disconnect(code?, reason?);
-    private _acceptOpen();
-    private _handleOpen(event);
-    private _handleMessage(event);
-    private _handleError(event);
-    private _handleClose(event);
+    private _getNextUrl;
+    private _connect;
+    private _handleTimeout;
+    private _disconnect;
+    private _acceptOpen;
+    private _handleOpen;
+    private _handleMessage;
+    private _handleError;
+    private _handleClose;
     /**
      * Remove event listeners to WebSocket instance
      */
-    private _removeListeners();
+    private _removeListeners;
     /**
      * Assign event listeners to WebSocket instance
      */
-    private _addListeners();
+    private _addListeners;
 }
