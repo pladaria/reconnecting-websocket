@@ -61,6 +61,7 @@ export default class ReconnectingWebSocket {
     private _shouldReconnect = true;
     private _connectLock = false;
     private _binaryType = 'blob';
+    private _closeCalled = false;
 
     private readonly _url: UrlProvider;
     private readonly _protocols?: string | string[];
@@ -192,8 +193,14 @@ export default class ReconnectingWebSocket {
      * CLOSED, this method does nothing
      */
     public close(code?: number, reason?: string) {
+        this._closeCalled = true;
         this._shouldReconnect = false;
-        if (!this._ws || this._ws.readyState === this.CLOSED) {
+        if (!this._ws) {
+            this._debug('close enqueued: no ws instance');
+            return;
+        }
+        if (this._ws.readyState === this.CLOSED) {
+            this._debug('close: already closed');
             return;
         }
         this._ws.close(code, reason);
@@ -300,7 +307,7 @@ export default class ReconnectingWebSocket {
     }
 
     private _connect() {
-        if (this._connectLock) {
+        if (this._connectLock || !this._shouldReconnect) {
             return;
         }
         this._connectLock = true;
@@ -332,7 +339,14 @@ export default class ReconnectingWebSocket {
                 this._ws!.binaryType = this._binaryType;
                 this._connectLock = false;
                 this._addListeners();
-                this._connectTimeout = setTimeout(() => this._handleTimeout(), connectionTimeout);
+
+                // close could be called before creating the ws
+                if (this._closeCalled) {
+                    this._closeCalled = true;
+                    this._ws!.close();
+                } else {
+                    this._connectTimeout = setTimeout(() => this._handleTimeout(), connectionTimeout);
+                }
             });
     }
 

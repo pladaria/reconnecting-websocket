@@ -25,6 +25,7 @@ export default class ReconnectingWebSocket {
     private _shouldReconnect;
     private _connectLock;
     private _binaryType;
+    private _closeCalled;
     private readonly _url;
     private readonly _protocols?;
     private readonly _options;

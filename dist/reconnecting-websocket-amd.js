@@ -123,6 +123,7 @@ define(function () { 'use strict';
             this._shouldReconnect = true;
             this._connectLock = false;
             this._binaryType = 'blob';
+            this._closeCalled = false;
             this.eventToHandler = new Map([
                 ['open', this._handleOpen.bind(this)],
                 ['close', this._handleClose.bind(this)],
@@ -292,8 +293,14 @@ define(function () { 'use strict';
          * CLOSED, this method does nothing
          */
         ReconnectingWebSocket.prototype.close = function (code, reason) {
+            this._closeCalled = true;
             this._shouldReconnect = false;
-            if (!this._ws || this._ws.readyState === this.CLOSED) {
+            if (!this._ws) {
+                this._debug('close enqueued: no ws instance');
+                return;
+            }
+            if (this._ws.readyState === this.CLOSED) {
+                this._debug('close: already closed');
                 return;
             }
             this._ws.close(code, reason);
@@ -386,7 +393,7 @@ define(function () { 'use strict';
         };
         ReconnectingWebSocket.prototype._connect = function () {
             var _this = this;
-            if (this._connectLock) {
+            if (this._connectLock || !this._shouldReconnect) {
                 return;
             }
             this._connectLock = true;
@@ -410,7 +417,14 @@ define(function () { 'use strict';
                 _this._ws.binaryType = _this._binaryType;
                 _this._connectLock = false;
                 _this._addListeners();
-                _this._connectTimeout = setTimeout(function () { return _this._handleTimeout(); }, connectionTimeout);
+                // close could be called before creating the ws
+                if (_this._closeCalled) {
+                    _this._closeCalled = true;
+                    _this._ws.close();
+                }
+                else {
+                    _this._connectTimeout = setTimeout(function () { return _this._handleTimeout(); }, connectionTimeout);
+                }
             });
         };
         ReconnectingWebSocket.prototype._handleTimeout = function () {
