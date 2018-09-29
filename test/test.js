@@ -432,7 +432,10 @@ test.cb('immediatly-failed connection should not timeout', t => {
 
 test.cb('connect and close before establishing connection', t => {
     const wss = new WebSocketServer({port: PORT});
-    const ws = new ReconnectingWebSocket(URL, undefined, {minReconnectionDelay: 0, maxReconnectionDelay: 0});
+    const ws = new ReconnectingWebSocket(URL, undefined, {
+        minReconnectionDelay: 0,
+        maxReconnectionDelay: 0,
+    });
 
     ws.close(); // closing before establishing connection
 
@@ -452,5 +455,5 @@ test.cb('connect and close before establishing connection', t => {
         // wait a little to be sure no unexpected open or close events happen
         wss.close();
         t.end();
-    }, 1000)
+    }, 1000);
 });
