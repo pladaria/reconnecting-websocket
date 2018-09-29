@@ -322,7 +322,7 @@ var ReconnectingWebSocket = /** @class */ (function () {
         this._connect();
     };
     /**
-     * Enqueues the specified data to be transmitted to the server over the WebSocket connection
+     * Enqueue specified data to be transmitted to the server over the WebSocket connection
      */
     ReconnectingWebSocket.prototype.send = function (data) {
         if (this._ws) {
@@ -339,7 +339,6 @@ var ReconnectingWebSocket = /** @class */ (function () {
      */
     ReconnectingWebSocket.prototype.addEventListener = function (type, listener) {
         if (this._listeners[type]) {
-            // @ts-ignore
             this._listeners[type].push(listener);
         }
     };
@@ -348,7 +347,6 @@ var ReconnectingWebSocket = /** @class */ (function () {
      */
     ReconnectingWebSocket.prototype.removeEventListener = function (type, listener) {
         if (this._listeners[type]) {
-            // @ts-ignore
             this._listeners[type] = this._listeners[type].filter(function (l) { return l !== listener; });
         }
     };
@@ -457,6 +455,14 @@ var ReconnectingWebSocket = /** @class */ (function () {
     ReconnectingWebSocket.prototype._acceptOpen = function () {
         this._retryCount = 0;
     };
+    ReconnectingWebSocket.prototype._callEventListener = function (event, listener) {
+        if ('handleEvent' in listener) {
+            listener.handleEvent(event);
+        }
+        else {
+            listener(event);
+        }
+    };
     ReconnectingWebSocket.prototype._handleOpen = function (event) {
         var _this = this;
         this._debug('open event');
@@ -472,26 +478,29 @@ var ReconnectingWebSocket = /** @class */ (function () {
         if (this.onopen) {
             this.onopen(event);
         }
-        this._listeners.open.forEach(function (listener) { return listener(event); });
+        this._listeners.open.forEach(function (listener) { return _this._callEventListener(event, listener); });
     };
     ReconnectingWebSocket.prototype._handleMessage = function (event) {
+        var _this = this;
         this._debug('message event');
         if (this.onmessage) {
             this.onmessage(event);
         }
-        this._listeners.message.forEach(function (listener) { return listener(event); });
+        this._listeners.message.forEach(function (listener) { return _this._callEventListener(event, listener); });
     };
     ReconnectingWebSocket.prototype._handleError = function (event) {
+        var _this = this;
         this._debug('error event', event.message);
         this._disconnect(undefined, event.message === 'TIMEOUT' ? 'timeout' : undefined);
         if (this.onerror) {
             this.onerror(event);
         }
         this._debug('exec error listeners');
-        this._listeners.error.forEach(function (listener) { return listener(event); });
+        this._listeners.error.forEach(function (listener) { return _this._callEventListener(event, listener); });
         this._connect();
     };
     ReconnectingWebSocket.prototype._handleClose = function (event) {
+        var _this = this;
         this._debug('close event');
         if (this._shouldReconnect) {
             this._connect();
@@ -499,7 +508,7 @@ var ReconnectingWebSocket = /** @class */ (function () {
         if (this.onclose) {
             this.onclose(event);
         }
-        this._listeners.close.forEach(function (listener) { return listener(event); });
+        this._listeners.close.forEach(function (listener) { return _this._callEventListener(event, listener); });
     };
     /**
      * Remove event listeners to WebSocket instance

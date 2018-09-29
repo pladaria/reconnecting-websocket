@@ -44,10 +44,10 @@ export type UrlProvider = string | (() => string) | (() => Promise<string>);
 export type Message = string | ArrayBuffer | Blob | ArrayBufferView;
 
 export type ListenersMap = {
-    error: Array<((event: ErrorEvent) => void)>;
-    message: Array<((event: MessageEvent) => void)>;
-    open: Array<((event: Event) => void)>;
-    close: Array<((event: CloseEvent) => void)>;
+    error: EventListener[];
+    message: EventListener[];
+    open: EventListener[];
+    close: EventListener[];
 };
 export default class ReconnectingWebSocket {
     private _ws?: WebSocket;
@@ -224,7 +224,7 @@ export default class ReconnectingWebSocket {
     }
 
     /**
-     * Enqueues the specified data to be transmitted to the server over the WebSocket connection
+     * Enqueue specified data to be transmitted to the server over the WebSocket connection
      */
     public send(data: Message) {
         if (this._ws) {
@@ -241,10 +241,9 @@ export default class ReconnectingWebSocket {
      */
     public addEventListener<K extends keyof WebSocketEventMap>(
         type: K,
-        listener: ((event: WebSocketEventMap[K]) => void),
+        listener: EventListener,
     ): void {
         if (this._listeners[type]) {
-            // @ts-ignore
             this._listeners[type].push(listener);
         }
     }
@@ -254,10 +253,9 @@ export default class ReconnectingWebSocket {
      */
     public removeEventListener<K extends keyof WebSocketEventMap>(
         type: K,
-        listener: ((event: WebSocketEventMap[K]) => void),
+        listener: EventListener,
     ): void {
         if (this._listeners[type]) {
-            // @ts-ignore
             this._listeners[type] = this._listeners[type].filter(l => l !== listener);
         }
     }
@@ -383,6 +381,14 @@ export default class ReconnectingWebSocket {
         this._retryCount = 0;
     }
 
+    private _callEventListener(event: Event | CloseEvent | MessageEvent, listener: EventListener) {
+        if ('handleEvent' in listener) {
+            listener.handleEvent(event);
+        } else {
+            listener(event);
+        }
+    }
+
     private _handleOpen(event: Event) {
         this._debug('open event');
         const {minUptime = DEFAULT.minUptime} = this._options;
@@ -401,7 +407,7 @@ export default class ReconnectingWebSocket {
         if (this.onopen) {
             this.onopen(event);
         }
-        this._listeners.open.forEach(listener => listener(event));
+        this._listeners.open.forEach(listener => this._callEventListener(event, listener));
     }
 
     private _handleMessage(event: MessageEvent) {
@@ -410,7 +416,7 @@ export default class ReconnectingWebSocket {
         if (this.onmessage) {
             this.onmessage(event);
         }
-        this._listeners.message.forEach(listener => listener(event));
+        this._listeners.message.forEach(listener => this._callEventListener(event, listener));
     }
 
     private _handleError(event: ErrorEvent) {
@@ -421,7 +427,7 @@ export default class ReconnectingWebSocket {
             this.onerror(event);
         }
         this._debug('exec error listeners');
-        this._listeners.error.forEach(listener => listener(event));
+        this._listeners.error.forEach(listener => this._callEventListener(event, listener));
 
         this._connect();
     }
@@ -436,7 +442,7 @@ export default class ReconnectingWebSocket {
         if (this.onclose) {
             this.onclose(event);
         }
-        this._listeners.close.forEach(listener => listener(event));
+        this._listeners.close.forEach(listener => this._callEventListener(event, listener));
     }
 
     /**

@@ -20,4 +20,8 @@ export interface WebSocketEventMap {
     message: MessageEvent;
     open: Event;
 }
-export declare type EventListener = (event: Event | CloseEvent | MessageEvent) => void;
+declare type Listener = (event: Event | CloseEvent | MessageEvent) => void;
+export declare type EventListener = Listener | {
+    handleEvent: Listener;
+};
+export {};

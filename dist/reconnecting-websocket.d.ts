@@ -4,7 +4,7 @@
  * https://github.com/pladaria/reconnecting-websocket
  * License MIT
  */
-import { CloseEvent, ErrorEvent, Event, WebSocketEventMap } from './events';
+import { CloseEvent, Event, EventListener, WebSocketEventMap } from './events';
 export declare type Options = {
     WebSocket?: any;
     maxReconnectionDelay?: number;
@@ -18,10 +18,10 @@ export declare type Options = {
 export declare type UrlProvider = string | (() => string) | (() => Promise<string>);
 export declare type Message = string | ArrayBuffer | Blob | ArrayBufferView;
 export declare type ListenersMap = {
-    error: Array<((event: ErrorEvent) => void)>;
-    message: Array<((event: MessageEvent) => void)>;
-    open: Array<((event: Event) => void)>;
-    close: Array<((event: CloseEvent) => void)>;
+    error: EventListener[];
+    message: EventListener[];
+    open: EventListener[];
+    close: EventListener[];
 };
 export default class ReconnectingWebSocket {
     private _ws?;
@@ -106,17 +106,17 @@ export default class ReconnectingWebSocket {
      */
     reconnect(code?: number, reason?: string): void;
     /**
-     * Enqueues the specified data to be transmitted to the server over the WebSocket connection
+     * Enqueue specified data to be transmitted to the server over the WebSocket connection
      */
     send(data: Message): void;
     /**
      * Register an event handler of a specific event type
      */
-    addEventListener<K extends keyof WebSocketEventMap>(type: K, listener: ((event: WebSocketEventMap[K]) => void)): void;
+    addEventListener<K extends keyof WebSocketEventMap>(type: K, listener: EventListener): void;
     /**
      * Removes an event listener
      */
-    removeEventListener<K extends keyof WebSocketEventMap>(type: K, listener: ((event: WebSocketEventMap[K]) => void)): void;
+    removeEventListener<K extends keyof WebSocketEventMap>(type: K, listener: EventListener): void;
     private _debug;
     private _getNextDelay;
     private _wait;
@@ -128,6 +128,7 @@ export default class ReconnectingWebSocket {
     private _handleTimeout;
     private _disconnect;
     private _acceptOpen;
+    private _callEventListener;
     private _handleOpen;
     private _handleMessage;
     private _handleError;

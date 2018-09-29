@@ -216,6 +216,40 @@ test.cb('level2 event listeners', t => {
     });
 });
 
+// https://developer.mozilla.org/en-US/docs/Web/API/EventListener/handleEvent
+test.cb('level2 event listeners using object with handleEvent', t => {
+    const anyProtocol = 'foobar';
+    const wss = new WebSocketServer({port: PORT});
+    const ws = new ReconnectingWebSocket(URL, anyProtocol, {});
+
+    ws.addEventListener('open', {
+        handleEvent: () => {
+            t.is(ws.protocol, anyProtocol);
+            t.is(ws.extensions, '');
+            t.is(ws.bufferedAmount, 0);
+            ws.close();
+        },
+    });
+
+    const fail = {
+        handleEvent: () => {
+            t.fail();
+        },
+    };
+    ws.addEventListener('unknown1', fail);
+    ws.addEventListener('open', fail);
+    ws.addEventListener('open', fail);
+    ws.removeEventListener('open', fail);
+    ws.removeEventListener('unknown2', fail);
+
+    ws.addEventListener('close', {
+        handleEvent: () => {
+            wss.close();
+            setTimeout(() => t.end(), 500);
+        },
+    });
+});
+
 test.cb('connection timeout', t => {
     const proc = spawn('node', [`${__dirname}/unresponsive-server.js`, PORT_UNRESPONSIVE, 5000]);
     t.plan(2);
