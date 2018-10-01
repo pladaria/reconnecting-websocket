@@ -44,10 +44,10 @@ export type UrlProvider = string | (() => string) | (() => Promise<string>);
 export type Message = string | ArrayBuffer | Blob | ArrayBufferView;
 
 export type ListenersMap = {
-    error: EventListener[];
-    message: EventListener[];
-    open: EventListener[];
-    close: EventListener[];
+    error: any[];
+    message: any[];
+    open: any[];
+    close: any[];
 };
 export default class ReconnectingWebSocket {
     private _ws?: WebSocket;
