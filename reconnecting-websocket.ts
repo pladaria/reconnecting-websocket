@@ -8,8 +8,8 @@ import {
     CloseEvent,
     ErrorEvent,
     Event,
-    WebSocketEventMap,
     WebSocketEventListenerMap,
+    WebSocketEventMap,
 } from './events';
 
 const getGlobalWebSocket = (): WebSocket | undefined => {
