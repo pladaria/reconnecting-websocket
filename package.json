@@ -1,6 +1,6 @@
 {
     "name": "reconnecting-websocket",
-    "version": "4.1.0",
+    "version": "4.1.1",
     "description": "Reconnecting WebSocket",
     "main": "./dist/reconnecting-websocket-cjs.js",
     "module": "./dist/reconnecting-websocket.mjs",
