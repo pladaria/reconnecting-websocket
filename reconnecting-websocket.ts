@@ -4,7 +4,13 @@
  * https://github.com/pladaria/reconnecting-websocket
  * License MIT
  */
-import {CloseEvent, ErrorEvent, Event, EventListener, WebSocketEventMap} from './events';
+import {
+    CloseEvent,
+    ErrorEvent,
+    Event,
+    WebSocketEventListenerMap,
+    WebSocketEventMap,
+} from './events';
 
 const getGlobalWebSocket = (): WebSocket | undefined => {
     if (typeof WebSocket !== 'undefined') {
@@ -44,10 +50,10 @@ export type UrlProvider = string | (() => string) | (() => Promise<string>);
 export type Message = string | ArrayBuffer | Blob | ArrayBufferView;
 
 export type ListenersMap = {
-    error: any[];
-    message: any[];
-    open: any[];
-    close: any[];
+    error: Array<WebSocketEventListenerMap['error']>;
+    message: Array<WebSocketEventListenerMap['message']>;
+    open: Array<WebSocketEventListenerMap['open']>;
+    close: Array<WebSocketEventListenerMap['close']>;
 };
 export default class ReconnectingWebSocket {
     private _ws?: WebSocket;
@@ -239,11 +245,12 @@ export default class ReconnectingWebSocket {
     /**
      * Register an event handler of a specific event type
      */
-    public addEventListener<K extends keyof WebSocketEventMap>(
-        type: K,
-        listener: EventListener,
+    public addEventListener<T extends keyof WebSocketEventListenerMap>(
+        type: T,
+        listener: WebSocketEventListenerMap[T],
     ): void {
         if (this._listeners[type]) {
+            // @ts-ignore
             this._listeners[type].push(listener);
         }
     }
@@ -251,11 +258,12 @@ export default class ReconnectingWebSocket {
     /**
      * Removes an event listener
      */
-    public removeEventListener<K extends keyof WebSocketEventMap>(
-        type: K,
-        listener: EventListener,
+    public removeEventListener<T extends keyof WebSocketEventListenerMap>(
+        type: T,
+        listener: WebSocketEventListenerMap[T],
     ): void {
         if (this._listeners[type]) {
+            // @ts-ignore
             this._listeners[type] = this._listeners[type].filter(l => l !== listener);
         }
     }
@@ -381,10 +389,15 @@ export default class ReconnectingWebSocket {
         this._retryCount = 0;
     }
 
-    private _callEventListener(event: Event | CloseEvent | MessageEvent, listener: EventListener) {
+    private _callEventListener<T extends keyof WebSocketEventListenerMap>(
+        event: WebSocketEventMap[T],
+        listener: WebSocketEventListenerMap[T],
+    ) {
         if ('handleEvent' in listener) {
+            // @ts-ignore
             listener.handleEvent(event);
         } else {
+            // @ts-ignore
             listener(event);
         }
     }

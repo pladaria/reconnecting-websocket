@@ -342,6 +342,7 @@ var ReconnectingWebSocket = (function () {
          */
         ReconnectingWebSocket.prototype.addEventListener = function (type, listener) {
             if (this._listeners[type]) {
+                // @ts-ignore
                 this._listeners[type].push(listener);
             }
         };
@@ -350,6 +351,7 @@ var ReconnectingWebSocket = (function () {
          */
         ReconnectingWebSocket.prototype.removeEventListener = function (type, listener) {
             if (this._listeners[type]) {
+                // @ts-ignore
                 this._listeners[type] = this._listeners[type].filter(function (l) { return l !== listener; });
             }
         };
@@ -460,9 +462,11 @@ var ReconnectingWebSocket = (function () {
         };
         ReconnectingWebSocket.prototype._callEventListener = function (event, listener) {
             if ('handleEvent' in listener) {
+                // @ts-ignore
                 listener.handleEvent(event);
             }
             else {
+                // @ts-ignore
                 listener(event);
             }
         };

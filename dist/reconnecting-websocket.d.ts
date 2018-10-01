@@ -4,7 +4,7 @@
  * https://github.com/pladaria/reconnecting-websocket
  * License MIT
  */
-import { CloseEvent, Event, EventListener, WebSocketEventMap } from './events';
+import { CloseEvent, Event, WebSocketEventListenerMap } from './events';
 export declare type Options = {
     WebSocket?: any;
     maxReconnectionDelay?: number;
@@ -18,10 +18,10 @@ export declare type Options = {
 export declare type UrlProvider = string | (() => string) | (() => Promise<string>);
 export declare type Message = string | ArrayBuffer | Blob | ArrayBufferView;
 export declare type ListenersMap = {
-    error: EventListener[];
-    message: EventListener[];
-    open: EventListener[];
-    close: EventListener[];
+    error: Array<WebSocketEventListenerMap['error']>;
+    message: Array<WebSocketEventListenerMap['message']>;
+    open: Array<WebSocketEventListenerMap['open']>;
+    close: Array<WebSocketEventListenerMap['close']>;
 };
 export default class ReconnectingWebSocket {
     private _ws?;
@@ -112,11 +112,11 @@ export default class ReconnectingWebSocket {
     /**
      * Register an event handler of a specific event type
      */
-    addEventListener<K extends keyof WebSocketEventMap>(type: K, listener: EventListener): void;
+    addEventListener<T extends keyof WebSocketEventListenerMap>(type: T, listener: WebSocketEventListenerMap[T]): void;
     /**
      * Removes an event listener
      */
-    removeEventListener<K extends keyof WebSocketEventMap>(type: K, listener: EventListener): void;
+    removeEventListener<T extends keyof WebSocketEventListenerMap>(type: T, listener: WebSocketEventListenerMap[T]): void;
     private _debug;
     private _getNextDelay;
     private _wait;
