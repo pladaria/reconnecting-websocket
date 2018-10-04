@@ -7,14 +7,14 @@ WebSocket that will automatically reconnect if the connection is closed.
 
 ## Features
 
-*   WebSocket API compatible (same interface, Level0 and Level2 event model)
-*   Fully configurable
-*   Multiplatform (Web, ServiceWorkers, Node.js, React Native)
-*   Dependency free (does not depend on Window, DOM or any EventEmitter library)
-*   Handle connection timeouts
-*   Debug mode
-*   Multiple builds available (see dist folder)
-*   Allows changing server URL between reconnections
+-   WebSocket API compatible (same interface, Level0 and Level2 event model)
+-   Fully configurable
+-   Multiplatform (Web, ServiceWorkers, Node.js, React Native)
+-   Dependency free (does not depend on Window, DOM or any EventEmitter library)
+-   Handle connection timeouts
+-   Debug mode
+-   Multiple builds available (see dist folder)
+-   Allows changing server URL between reconnections
 
 ## Install
 
@@ -48,9 +48,9 @@ rws.addEventListener('open', () => {
 
 The `url` parameter will be resolved before connecting, possible types:
 
-*   `string`
-*   `() => string`
-*   `() => Promise<string>`
+-   `string`
+-   `() => string`
+-   `() => Promise<string>`
 
 ```javascript
 import ReconnectingWebSocket from 'reconnecting-websocket';
@@ -100,7 +100,7 @@ type Options = {
     maxReconnectionDelay?: number; // max delay in ms between reconnections
     minReconnectionDelay?: number; // min delay in ms between reconnections
     reconnectionDelayGrowFactor?: number; // how fast the reconnection delay grows
-    minUptime?: number; // min time in ms do consider connection as stable
+    minUptime?: number; // min time in ms to consider connection as stable
     connectionTimeout?: number; // retry connect if not connected after this time, in ms
     maxRetries?: number; // maximum number of retries
     debug?: boolean; // enables debug output
@@ -113,8 +113,8 @@ type Options = {
 WebSocket: undefined,
 maxReconnectionDelay: 10000,
 minReconnectionDelay: 1000 + Math.random() * 4000,
-minUptime: 5000,
 reconnectionDelayGrowFactor: 1.3,
+minUptime: 5000,
 connectionTimeout: 4000,
 maxRetries: Infinity,
 debug: false,
