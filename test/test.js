@@ -125,6 +125,55 @@ test('URL provider', async t => {
     }
 });
 
+test.cb('websocket protocol', t => {
+    const anyProtocol = 'foobar';
+    const wss = new WebSocketServer({port: PORT});
+    const ws = new ReconnectingWebSocket(URL, anyProtocol, {});
+
+    ws.addEventListener('open', () => {
+        t.is(ws.url, URL);
+        t.is(ws.protocol, anyProtocol);
+        ws.close();
+    });
+
+    ws.addEventListener('close', () => {
+        wss.close();
+        setTimeout(() => t.end(), 500);
+    });
+});
+
+test.cb('undefined websocket protocol', t => {
+    const wss = new WebSocketServer({port: PORT});
+    const ws = new ReconnectingWebSocket(URL, undefined, {});
+
+    ws.addEventListener('open', () => {
+        t.is(ws.url, URL);
+        t.is(ws.protocol, '');
+        ws.close();
+    });
+
+    ws.addEventListener('close', () => {
+        wss.close();
+        setTimeout(() => t.end(), 100);
+    });
+});
+
+test.cb('null websocket protocol', t => {
+    const wss = new WebSocketServer({port: PORT});
+    const ws = new ReconnectingWebSocket(URL, null, {});
+
+    ws.addEventListener('open', () => {
+        t.is(ws.url, URL);
+        t.is(ws.protocol, '');
+        ws.close();
+    });
+
+    ws.addEventListener('close', () => {
+        wss.close();
+        setTimeout(() => t.end(), 100);
+    });
+});
+
 test('connection status constants', t => {
     const ws = new ReconnectingWebSocket(URL, null, {maxRetries: 0});
 
