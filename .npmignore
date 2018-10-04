@@ -5,6 +5,7 @@
 .travis.yml
 .vscode
 coverage
+examples
 npm-debug.log*
 package-lock.json
 rollup.config.js
