@@ -146,7 +146,17 @@ export default class ReconnectingWebSocket {
      * this will continue to climb. Read only
      */
     get bufferedAmount(): number {
-        return this._ws ? this._ws.bufferedAmount : 0;
+        const bytes = this._messageQueue.reduce((acc, message) => {
+            if (typeof message === 'string') {
+                acc += message.length; // not byte size
+            } else if (message instanceof Blob) {
+                acc += message.size;
+            } else {
+                acc += message.byteLength;
+            }
+            return acc;
+        }, 0);
+        return bytes + (this._ws ? this._ws.bufferedAmount : 0);
     }
 
     /**
@@ -237,7 +247,7 @@ export default class ReconnectingWebSocket {
      * Enqueue specified data to be transmitted to the server over the WebSocket connection
      */
     public send(data: Message) {
-        if (this._ws) {
+        if (this._ws && this._ws.readyState === this.OPEN) {
             this._debug('send', data);
             this._ws.send(data);
         } else {
@@ -417,7 +427,7 @@ export default class ReconnectingWebSocket {
         // @ts-ignore
         this._ws!.binaryType = this._binaryType;
 
-        // send enqueued messages (messages sent before websocket initialization)
+        // send enqueued messages (messages sent before websocket open event)
         this._messageQueue.forEach(message => this._ws!.send(message));
         this._messageQueue = [];
 

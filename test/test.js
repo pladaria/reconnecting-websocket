@@ -522,6 +522,8 @@ test.cb('enqueue sent messages before websocket initialization', t => {
     messages.forEach(m => ws.send(m));
     t.is(ws._messageQueue.length, messages.length);
 
+    t.is(ws.bufferedAmount, messages.reduce((a, m) => a + m.length, 0));
+
     let i = 0;
     wss.on('connection', client => {
         client.on('message', data => {

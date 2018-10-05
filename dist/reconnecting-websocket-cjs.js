@@ -244,7 +244,19 @@ var ReconnectingWebSocket = /** @class */ (function () {
          * this will continue to climb. Read only
          */
         get: function () {
-            return this._ws ? this._ws.bufferedAmount : 0;
+            var bytes = this._messageQueue.reduce(function (acc, message) {
+                if (typeof message === 'string') {
+                    acc += message.length; // not byte size
+                }
+                else if (message instanceof Blob) {
+                    acc += message.size;
+                }
+                else {
+                    acc += message.byteLength;
+                }
+                return acc;
+            }, 0);
+            return bytes + (this._ws ? this._ws.bufferedAmount : 0);
         },
         enumerable: true,
         configurable: true
@@ -327,7 +339,7 @@ var ReconnectingWebSocket = /** @class */ (function () {
      * Enqueue specified data to be transmitted to the server over the WebSocket connection
      */
     ReconnectingWebSocket.prototype.send = function (data) {
-        if (this._ws) {
+        if (this._ws && this._ws.readyState === this.OPEN) {
             this._debug('send', data);
             this._ws.send(data);
         }
@@ -478,7 +490,7 @@ var ReconnectingWebSocket = /** @class */ (function () {
         this._debug('assign binary type');
         // @ts-ignore
         this._ws.binaryType = this._binaryType;
-        // send enqueued messages (messages sent before websocket initialization)
+        // send enqueued messages (messages sent before websocket open event)
         this._messageQueue.forEach(function (message) { return _this._ws.send(message); });
         this._messageQueue = [];
         if (this.onopen) {

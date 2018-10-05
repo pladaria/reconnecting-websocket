@@ -9,12 +9,13 @@ WebSocket that will automatically reconnect if the connection is closed.
 
 -   WebSocket API compatible (same interface, Level0 and Level2 event model)
 -   Fully configurable
--   Multiplatform (Web, ServiceWorkers, Node.js, React Native)
+-   Multi-platform (Web, ServiceWorkers, Node.js, React Native)
 -   Dependency free (does not depend on Window, DOM or any EventEmitter library)
 -   Handle connection timeouts
--   Debug mode
--   Multiple builds available (see dist folder)
 -   Allows changing server URL between reconnections
+-   Buffering. Will send accumulated messages on open
+-   Multiple builds available (see dist folder)
+-   Debug mode
 
 ## Install
 
