@@ -364,7 +364,9 @@ export default class ReconnectingWebSocket {
                     return;
                 }
                 this._debug('connect', {url, protocols: this._protocols});
-                this._ws = new WebSocket(url, this._protocols);
+                this._ws = this._protocols
+                    ? new WebSocket(url, this._protocols)
+                    : new WebSocket(url);
                 // @ts-ignore
                 this._ws!.binaryType = this._binaryType;
                 this._connectLock = false;
