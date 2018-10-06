@@ -297,9 +297,8 @@ export default class ReconnectingWebSocket {
                 minReconnectionDelay = DEFAULT.minReconnectionDelay,
                 maxReconnectionDelay = DEFAULT.maxReconnectionDelay,
             } = this._options;
-
             delay =
-                minReconnectionDelay + Math.pow(this._retryCount - 1, reconnectionDelayGrowFactor);
+                minReconnectionDelay * Math.pow(reconnectionDelayGrowFactor, this._retryCount - 1);
             if (delay > maxReconnectionDelay) {
                 delay = maxReconnectionDelay;
             }
@@ -360,6 +359,10 @@ export default class ReconnectingWebSocket {
         this._wait()
             .then(() => this._getNextUrl(this._url))
             .then(url => {
+                // close could be called before creating the ws
+                if (this._closeCalled) {
+                    return;
+                }
                 this._debug('connect', {url, protocols: this._protocols});
                 this._ws = new WebSocket(url, this._protocols);
                 // @ts-ignore
@@ -367,16 +370,7 @@ export default class ReconnectingWebSocket {
                 this._connectLock = false;
                 this._addListeners();
 
-                // close could be called before creating the ws
-                if (this._closeCalled) {
-                    this._closeCalled = true;
-                    this._ws!.close();
-                } else {
-                    this._connectTimeout = setTimeout(
-                        () => this._handleTimeout(),
-                        connectionTimeout,
-                    );
-                }
+                this._connectTimeout = setTimeout(() => this._handleTimeout(), connectionTimeout);
             });
     }
 

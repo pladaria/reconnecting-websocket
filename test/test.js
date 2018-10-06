@@ -165,7 +165,7 @@ test.cb('max retries: 5', t => maxRetriesTest(5, t));
 test.cb('level0 event listeners are kept after reconnect', t => {
     const ws = new ReconnectingWebSocket(URL, null, {
         maxRetries: 4,
-        reconnectionDelayFactor: 1.2,
+        reconnectionDelayGrowFactor: 1.2,
         maxReconnectionDelay: 20,
         minReconnectionDelay: 10,
     });
@@ -585,6 +585,26 @@ test.cb('closing from the other side should reconnect', t => {
         }
         if (j > max) {
             t.fail('unexpected open');
+        }
+    });
+});
+
+test.cb('reconnection delay grow factor', t => {
+    const ws = new ReconnectingWebSocket('wss://bad.url', [], {
+        minReconnectionDelay: 100,
+        maxReconnectionDelay: 1000,
+        reconnectionDelayGrowFactor: 2,
+    });
+    const expected = [100, 200, 400, 800, 1000, 1000];
+    let retry = 0;
+    ws.addEventListener('error', e => {
+        t.is(ws._getNextDelay(), expected[retry]);
+        retry++;
+        if (retry >= expected.length) {
+            ws.close();
+            setTimeout(() => {
+                t.end();
+            }, 2000);
         }
     });
 });

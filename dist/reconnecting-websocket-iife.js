@@ -382,7 +382,7 @@ var ReconnectingWebSocket = (function () {
             if (this._retryCount > 0) {
                 var _a = this._options, _b = _a.reconnectionDelayGrowFactor, reconnectionDelayGrowFactor = _b === void 0 ? DEFAULT.reconnectionDelayGrowFactor : _b, _c = _a.minReconnectionDelay, minReconnectionDelay = _c === void 0 ? DEFAULT.minReconnectionDelay : _c, _d = _a.maxReconnectionDelay, maxReconnectionDelay = _d === void 0 ? DEFAULT.maxReconnectionDelay : _d;
                 delay =
-                    minReconnectionDelay + Math.pow(this._retryCount - 1, reconnectionDelayGrowFactor);
+                    minReconnectionDelay * Math.pow(reconnectionDelayGrowFactor, this._retryCount - 1);
                 if (delay > maxReconnectionDelay) {
                     delay = maxReconnectionDelay;
                 }
@@ -434,20 +434,17 @@ var ReconnectingWebSocket = (function () {
             this._wait()
                 .then(function () { return _this._getNextUrl(_this._url); })
                 .then(function (url) {
+                // close could be called before creating the ws
+                if (_this._closeCalled) {
+                    return;
+                }
                 _this._debug('connect', { url: url, protocols: _this._protocols });
                 _this._ws = new WebSocket(url, _this._protocols);
                 // @ts-ignore
                 _this._ws.binaryType = _this._binaryType;
                 _this._connectLock = false;
                 _this._addListeners();
-                // close could be called before creating the ws
-                if (_this._closeCalled) {
-                    _this._closeCalled = true;
-                    _this._ws.close();
-                }
-                else {
-                    _this._connectTimeout = setTimeout(function () { return _this._handleTimeout(); }, connectionTimeout);
-                }
+                _this._connectTimeout = setTimeout(function () { return _this._handleTimeout(); }, connectionTimeout);
             });
         };
         ReconnectingWebSocket.prototype._handleTimeout = function () {
