@@ -271,10 +271,6 @@ test.cb('connection timeout', t => {
                 setTimeout(() => t.end(), 1000);
             }
         });
-
-        ws.addEventListener('close', event => {
-            console.log('>>>> CLOSE', event.message);
-        });
     });
 });
 
@@ -585,6 +581,39 @@ test.cb('closing from the other side should reconnect', t => {
         }
         if (j > max) {
             t.fail('unexpected open');
+        }
+    });
+});
+
+test.cb('closing from the other side should allow to keep closed', t => {
+    const wss = new WebSocketServer({port: PORT});
+    const ws = new ReconnectingWebSocket(URL, undefined, {
+        minReconnectionDelay: 100,
+        maxReconnectionDelay: 200,
+    });
+
+    const codes = [4000, 4001];
+
+    let i = 0;
+    wss.on('connection', client => {
+        if (i > codes.length) {
+            t.fail();
+        }
+        client.close(codes[i], String(codes[i]));
+        i++;
+    });
+
+    let j = 0;
+    ws.addEventListener('close', e => {
+        if (e.code === codes[0]) {
+            // do nothing, will reconnect
+        }
+        if (e.code === codes[1] && e.reason === String(codes[1])) {
+            // close connection (and keep closed)
+            ws.close();
+            setTimeout(() => {
+                wss.close(() => t.end());
+            }, 1000);
         }
     });
 });
