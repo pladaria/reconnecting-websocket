@@ -313,9 +313,6 @@ export default class ReconnectingWebSocket {
         });
     }
 
-    /**
-     * @return Promise<string>
-     */
     private _getNextUrl(urlProvider: UrlProvider): Promise<string> {
         if (typeof urlProvider === 'string') {
             return Promise.resolve(urlProvider);
