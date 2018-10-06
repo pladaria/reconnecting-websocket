@@ -438,7 +438,9 @@ var ReconnectingWebSocket = /** @class */ (function () {
                 return;
             }
             _this._debug('connect', { url: url, protocols: _this._protocols });
-            _this._ws = new WebSocket(url, _this._protocols);
+            _this._ws = _this._protocols
+                ? new WebSocket(url, _this._protocols)
+                : new WebSocket(url);
             // @ts-ignore
             _this._ws.binaryType = _this._binaryType;
             _this._connectLock = false;
