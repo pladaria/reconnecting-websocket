@@ -123,9 +123,6 @@ export default class ReconnectingWebSocket {
     private _debug;
     private _getNextDelay;
     private _wait;
-    /**
-     * @return Promise<string>
-     */
     private _getNextUrl;
     private _connect;
     private _handleTimeout;

@@ -235,12 +235,14 @@ export default class ReconnectingWebSocket {
      */
     public reconnect(code?: number, reason?: string) {
         this._shouldReconnect = true;
+        this._closeCalled = false;
         this._retryCount = -1;
         if (!this._ws || this._ws.readyState === this.CLOSED) {
             this._connect();
+        } else {
+            this._disconnect(code, reason);
+            this._connect();
         }
-        this._disconnect(code, reason);
-        this._connect();
     }
 
     /**

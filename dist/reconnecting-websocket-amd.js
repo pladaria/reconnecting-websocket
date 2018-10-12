@@ -328,12 +328,15 @@ define(function () { 'use strict';
          */
         ReconnectingWebSocket.prototype.reconnect = function (code, reason) {
             this._shouldReconnect = true;
+            this._closeCalled = false;
             this._retryCount = -1;
             if (!this._ws || this._ws.readyState === this.CLOSED) {
                 this._connect();
             }
-            this._disconnect(code, reason);
-            this._connect();
+            else {
+                this._disconnect(code, reason);
+                this._connect();
+            }
         };
         /**
          * Enqueue specified data to be transmitted to the server over the WebSocket connection
@@ -395,9 +398,6 @@ define(function () { 'use strict';
                 setTimeout(resolve, _this._getNextDelay());
             });
         };
-        /**
-         * @return Promise<string>
-         */
         ReconnectingWebSocket.prototype._getNextUrl = function (urlProvider) {
             if (typeof urlProvider === 'string') {
                 return Promise.resolve(urlProvider);

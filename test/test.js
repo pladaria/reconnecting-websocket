@@ -686,3 +686,42 @@ test.cb('reconnection delay grow factor', t => {
         }
     });
 });
+
+test.cb('reconnect after closing', t => {
+    const wss = new WebSocketServer({port: PORT});
+    const ws = new ReconnectingWebSocket(URL, undefined, {
+        minReconnectionDelay: 100,
+        maxReconnectionDelay: 200,
+    });
+
+    let i = 0;
+    ws.addEventListener('open', () => {
+        i++;
+        if (i === 1) {
+            ws.close();
+        }
+        if (i === 2) {
+            ws.close();
+        }
+        if (i > 2) {
+            t.fail('no more reconnections expected');
+        }
+    });
+
+    ws.addEventListener('close', () => {
+        if (i === 1)
+            setTimeout(() => {
+                ws.reconnect();
+            }, 1000);
+        if (i === 2) {
+            wss.close(() => {
+                setTimeout(() => {
+                    t.end();
+                }, 1000);
+            });
+        }
+        if (i > 2) {
+            t.fail('no more reconnections expected');
+        }
+    });
+});
