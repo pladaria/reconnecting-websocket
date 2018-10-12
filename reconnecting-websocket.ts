@@ -80,13 +80,6 @@ export default class ReconnectingWebSocket {
     private readonly _protocols?: string | string[];
     private readonly _options: Options;
 
-    private readonly eventToHandler = new Map<keyof WebSocketEventMap, any>([
-        ['open', this._handleOpen.bind(this)],
-        ['close', this._handleClose.bind(this)],
-        ['error', this._handleError.bind(this)],
-        ['message', this._handleMessage.bind(this)],
-    ]);
-
     constructor(url: UrlProvider, protocols?: string | string[], options: Options = {}) {
         this._url = url;
         this._protocols = protocols;
@@ -218,6 +211,7 @@ export default class ReconnectingWebSocket {
     public close(code: number = 1000, reason?: string) {
         this._closeCalled = true;
         this._shouldReconnect = false;
+        this._clearTimeouts();
         if (!this._ws) {
             this._debug('close enqueued: no ws instance');
             return;
@@ -292,13 +286,13 @@ export default class ReconnectingWebSocket {
     }
 
     private _getNextDelay() {
-        let delay = 0;
+        const {
+            reconnectionDelayGrowFactor = DEFAULT.reconnectionDelayGrowFactor,
+            minReconnectionDelay = DEFAULT.minReconnectionDelay,
+            maxReconnectionDelay = DEFAULT.maxReconnectionDelay,
+        } = this._options;
+        let delay = minReconnectionDelay;
         if (this._retryCount > 0) {
-            const {
-                reconnectionDelayGrowFactor = DEFAULT.reconnectionDelayGrowFactor,
-                minReconnectionDelay = DEFAULT.minReconnectionDelay,
-                maxReconnectionDelay = DEFAULT.maxReconnectionDelay,
-            } = this._options;
             delay =
                 minReconnectionDelay * Math.pow(reconnectionDelayGrowFactor, this._retryCount - 1);
             if (delay > maxReconnectionDelay) {
@@ -381,7 +375,7 @@ export default class ReconnectingWebSocket {
     }
 
     private _disconnect(code: number = 1000, reason?: string) {
-        clearTimeout(this._connectTimeout);
+        this._clearTimeouts();
         if (!this._ws) {
             return;
         }
@@ -395,6 +389,7 @@ export default class ReconnectingWebSocket {
     }
 
     private _acceptOpen() {
+        this._debug('accept open');
         this._retryCount = 0;
     }
 
@@ -411,14 +406,13 @@ export default class ReconnectingWebSocket {
         }
     }
 
-    private _handleOpen(event: Event) {
+    private _handleOpen = (event: Event) => {
         this._debug('open event');
         const {minUptime = DEFAULT.minUptime} = this._options;
 
         clearTimeout(this._connectTimeout);
         this._uptimeTimeout = setTimeout(() => this._acceptOpen(), minUptime);
 
-        this._debug('assign binary type');
         // @ts-ignore
         this._ws!.binaryType = this._binaryType;
 
@@ -430,18 +424,18 @@ export default class ReconnectingWebSocket {
             this.onopen(event);
         }
         this._listeners.open.forEach(listener => this._callEventListener(event, listener));
-    }
+    };
 
-    private _handleMessage(event: MessageEvent) {
+    private _handleMessage = (event: MessageEvent) => {
         this._debug('message event');
 
         if (this.onmessage) {
             this.onmessage(event);
         }
         this._listeners.message.forEach(listener => this._callEventListener(event, listener));
-    }
+    };
 
-    private _handleError(event: ErrorEvent) {
+    private _handleError = (event: ErrorEvent) => {
         this._debug('error event', event.message);
         this._disconnect(undefined, event.message === 'TIMEOUT' ? 'timeout' : undefined);
 
@@ -452,10 +446,11 @@ export default class ReconnectingWebSocket {
         this._listeners.error.forEach(listener => this._callEventListener(event, listener));
 
         this._connect();
-    }
+    };
 
-    private _handleClose(event: CloseEvent) {
+    private _handleClose = (event: CloseEvent) => {
         this._debug('close event');
+        this._clearTimeouts();
 
         if (this._shouldReconnect) {
             this._connect();
@@ -465,28 +460,34 @@ export default class ReconnectingWebSocket {
             this.onclose(event);
         }
         this._listeners.close.forEach(listener => this._callEventListener(event, listener));
-    }
+    };
 
-    /**
-     * Remove event listeners to WebSocket instance
-     */
     private _removeListeners() {
         if (!this._ws) {
             return;
         }
         this._debug('removeListeners');
-        for (const [type, handler] of this.eventToHandler) {
-            this._ws.removeEventListener(type, handler);
-        }
+        this._ws.removeEventListener('open', this._handleOpen);
+        this._ws.removeEventListener('close', this._handleClose);
+        this._ws.removeEventListener('message', this._handleMessage);
+        // @ts-ignore
+        this._ws.removeEventListener('error', this._handleError);
     }
 
-    /**
-     * Assign event listeners to WebSocket instance
-     */
     private _addListeners() {
-        this._debug('addListeners');
-        for (const [type, handler] of this.eventToHandler) {
-            this._ws!.addEventListener(type, handler);
+        if (!this._ws) {
+            return;
         }
+        this._debug('addListeners');
+        this._ws.addEventListener('open', this._handleOpen);
+        this._ws.addEventListener('close', this._handleClose);
+        this._ws.addEventListener('message', this._handleMessage);
+        // @ts-ignore
+        this._ws.addEventListener('error', this._handleError);
+    }
+
+    private _clearTimeouts() {
+        clearTimeout(this._connectTimeout);
+        clearTimeout(this._uptimeTimeout);
     }
 }

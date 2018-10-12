@@ -128,7 +128,10 @@ test('URL provider', async t => {
 test.cb('websocket protocol', t => {
     const anyProtocol = 'foobar';
     const wss = new WebSocketServer({port: PORT});
-    const ws = new ReconnectingWebSocket(URL, anyProtocol, {});
+    const ws = new ReconnectingWebSocket(URL, anyProtocol, {
+        // minReconnectionDelay: 100,
+        // maxReconnectionDelay: 200,
+    });
 
     ws.addEventListener('open', () => {
         t.is(ws.url, URL);
@@ -137,8 +140,11 @@ test.cb('websocket protocol', t => {
     });
 
     ws.addEventListener('close', () => {
-        wss.close();
-        setTimeout(() => t.end(), 500);
+        wss.close(() => {
+            setTimeout(() => {
+                t.end();
+            }, 500);
+        });
     });
 });
 
@@ -153,8 +159,11 @@ test.cb('undefined websocket protocol', t => {
     });
 
     ws.addEventListener('close', () => {
-        wss.close();
-        setTimeout(() => t.end(), 100);
+        wss.close(() => {
+            setTimeout(() => {
+                t.end();
+            }, 500);
+        });
     });
 });
 
@@ -169,8 +178,11 @@ test.cb('null websocket protocol', t => {
     });
 
     ws.addEventListener('close', () => {
-        wss.close();
-        setTimeout(() => t.end(), 100);
+        wss.close(() => {
+            setTimeout(() => {
+                t.end();
+            }, 100);
+        });
     });
 });
 
@@ -260,8 +272,9 @@ test.cb('level2 event listeners', t => {
     ws.removeEventListener('unknown2', fail);
 
     ws.addEventListener('close', () => {
-        wss.close();
-        setTimeout(() => t.end(), 500);
+        wss.close(() => {
+            setTimeout(() => t.end(), 500);
+        });
     });
 });
 
@@ -526,7 +539,9 @@ test.cb('immediately-failed connection with 0 maxRetries must not retry', t => {
         if (i > 1) {
             t.fail();
         }
-        setTimeout(() => t.end(), 500);
+        setTimeout(() => {
+            t.end();
+        }, 500);
     });
 });
 
@@ -687,6 +702,47 @@ test.cb('reconnection delay grow factor', t => {
     });
 });
 
+test.cb('minUptime', t => {
+    const wss = new WebSocketServer({port: PORT});
+    const ws = new ReconnectingWebSocket(URL, [], {
+        minReconnectionDelay: 100,
+        maxReconnectionDelay: 2000,
+        reconnectionDelayGrowFactor: 2,
+        minUptime: 500,
+    });
+    const expectedDelays = [100, 200, 400, 800, 100, 100];
+    const expectedRetryCount = [1, 2, 3, 4, 1, 1];
+    let connectionCount = 0;
+    wss.on('connection', client => {
+        connectionCount++;
+        if (connectionCount <= expectedDelays.length) {
+            setTimeout(() => {
+                client.close();
+            }, connectionCount * 100);
+        }
+    });
+    let openCount = 0;
+    ws.addEventListener('open', e => {
+        openCount++;
+        if (openCount > expectedDelays.length) {
+            ws.close();
+            wss.close(() => {
+                setTimeout(() => {
+                    t.end();
+                }, 1000);
+            });
+        }
+    });
+    let closeCount = 0;
+    ws.addEventListener('close', () => {
+        if (closeCount < expectedDelays.length) {
+            t.is(ws._getNextDelay(), expectedDelays[closeCount]);
+            t.is(ws._retryCount, expectedRetryCount[closeCount]);
+            closeCount++;
+        }
+    });
+});
+
 test.cb('reconnect after closing', t => {
     const wss = new WebSocketServer({port: PORT});
     const ws = new ReconnectingWebSocket(URL, undefined, {
@@ -725,3 +781,15 @@ test.cb('reconnect after closing', t => {
         }
     });
 });
+
+// test.cb('reconnect after closing', t => {
+//     const wss = new WebSocketServer({port: PORT});
+//     const ws = new ReconnectingWebSocket(URL, undefined, {
+//         minReconnectionDelay: 100,
+//         maxReconnectionDelay: 200,
+//     });
+
+//     ws.addEventListener('open', () => {});
+
+//     ws.addEventListener('close', () => {});
+// });
