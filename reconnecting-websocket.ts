@@ -278,10 +278,11 @@ export default class ReconnectingWebSocket {
         }
     }
 
-    private _debug(...params: any[]) {
+    private _debug(...args: any[]) {
         if (this._options.debug) {
+            // not using spread because compiled version uses Symbols
             // tslint:disable-next-line
-            console.log('RWS>', ...params);
+            console.log.apply(console, ['RWS>'].concat(args));
         }
     }
 

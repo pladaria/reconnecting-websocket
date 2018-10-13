@@ -46,17 +46,6 @@ test.cb('global WebSocket is used if available', t => {
     };
 });
 
-test.cb('send is ignored when not ready', t => {
-    const ws = new ReconnectingWebSocket(URL, undefined, {
-        maxRetries: 0,
-    });
-    ws.send('message');
-    ws.onerror = () => {
-        t.pass();
-        t.end();
-    };
-});
-
 test.cb('getters when not ready', t => {
     const ws = new ReconnectingWebSocket(URL, undefined, {
         maxRetries: 0,
@@ -79,7 +68,6 @@ test.cb('debug', t => {
 
     const ws = new ReconnectingWebSocket(URL, undefined, {
         maxRetries: 0,
-        debug: true,
     });
 
     ws.onerror = () => {
@@ -573,7 +561,22 @@ test.cb('connect and close before establishing connection', t => {
     }, 1000);
 });
 
-test.cb('enqueue sent messages before websocket initialization', t => {
+test.cb('enqueue messages', t => {
+    const ws = new ReconnectingWebSocket(URL, undefined, {
+        maxRetries: 0,
+    });
+    const count = 10;
+    const message = 'message';
+    for (let i = 0; i < count; i++) ws.send('message');
+
+    ws.onerror = () => {
+        t.is(ws.bufferedAmount, message.length * count);
+        t.pass();
+        t.end();
+    };
+});
+
+test.cb('enqueue messages before websocket initialization with expected order', t => {
     const wss = new WebSocketServer({port: PORT});
     const ws = new ReconnectingWebSocket(URL);
 
