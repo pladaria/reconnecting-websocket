@@ -448,6 +448,7 @@ var ReconnectingWebSocket = (function () {
                 .then(function (url) {
                 // close could be called before creating the ws
                 if (_this._closeCalled) {
+                    _this._connectLock = false;
                     return;
                 }
                 _this._debug('connect', { url: url, protocols: _this._protocols });
