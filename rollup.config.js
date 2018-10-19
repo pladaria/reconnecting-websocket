@@ -22,5 +22,9 @@ export default {
             file: 'dist/reconnecting-websocket.mjs',
             format: 'es',
         },
+        {
+            file: 'dist/reconnecting-websocket-mjs.js',
+            format: 'es',
+        },
     ],
 };

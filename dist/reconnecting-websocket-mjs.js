@@ -1,5 +1,3 @@
-'use strict';
-
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use
@@ -447,7 +445,6 @@ var ReconnectingWebSocket = /** @class */ (function () {
             .then(function (url) {
             // close could be called before creating the ws
             if (_this._closeCalled) {
-                _this._connectLock = false;
                 return;
             }
             _this._debug('connect', { url: url, protocols: _this._protocols });
@@ -523,4 +520,4 @@ var ReconnectingWebSocket = /** @class */ (function () {
     return ReconnectingWebSocket;
 }());
 
-module.exports = ReconnectingWebSocket;
+export default ReconnectingWebSocket;

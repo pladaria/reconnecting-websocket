@@ -40,7 +40,6 @@ export default class ReconnectingWebSocket {
     private readonly _url;
     private readonly _protocols?;
     private readonly _options;
-    private readonly eventToHandler;
     constructor(url: UrlProvider, protocols?: string | string[], options?: Options);
     static readonly CONNECTING: number;
     static readonly OPEN: number;
@@ -123,9 +122,6 @@ export default class ReconnectingWebSocket {
     private _debug;
     private _getNextDelay;
     private _wait;
-    /**
-     * @return Promise<string>
-     */
     private _getNextUrl;
     private _connect;
     private _handleTimeout;
@@ -136,12 +132,7 @@ export default class ReconnectingWebSocket {
     private _handleMessage;
     private _handleError;
     private _handleClose;
-    /**
-     * Remove event listeners to WebSocket instance
-     */
     private _removeListeners;
-    /**
-     * Assign event listeners to WebSocket instance
-     */
     private _addListeners;
+    private _clearTimeouts;
 }

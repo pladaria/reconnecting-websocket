@@ -10,7 +10,8 @@
         "interface-over-type-literal": false,
         "member-ordering": false,
         "max-classes-per-file": false,
-        "interface-name": false
+        "interface-name": false,
+        "semicolon": false
     },
     "rulesDirectory": []
 }

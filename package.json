@@ -1,6 +1,10 @@
 {
     "name": "reconnecting-websocket",
+<<<<<<< HEAD
     "version": "4.1.3",
+=======
+    "version": "4.1.9",
+>>>>>>> da027e4941950cc6a4cc09686a722c2deb659d72
     "description": "Reconnecting WebSocket",
     "main": "./dist/reconnecting-websocket-cjs.js",
     "module": "./dist/reconnecting-websocket.mjs",
@@ -32,18 +36,18 @@
         "ava": "^0.25.0",
         "coveralls": "^3.0.2",
         "del-cli": "^1.1.0",
-        "husky": "^1.0.1",
+        "husky": "^1.1.2",
         "lint-staged": "^7.3.0",
-        "nyc": "^13.0.1",
+        "nyc": "^13.1.0",
         "opn-cli": "^3.1.0",
         "prettier": "^1.14.3",
-        "rollup": "^0.66.2",
-        "rollup-plugin-typescript2": "^0.17.0",
+        "rollup": "^0.66.6",
+        "rollup-plugin-typescript2": "^0.17.1",
         "tslib": "^1.9.3",
         "tslint": "^5.11.0",
-        "typescript": "^3.1.1",
-        "uglify-es": "^3.3.9",
-        "ws": "^6.0.0"
+        "typescript": "^3.1.3",
+        "uglify-es": "^3.3.10",
+        "ws": "^6.1.0"
     },
     "dependencies": {},
     "directories": {
