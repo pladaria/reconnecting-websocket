@@ -85,6 +85,7 @@ var ReconnectingWebSocket = (function () {
         connectionTimeout: 4000,
         maxRetries: Infinity,
         debug: false,
+        bufferWhileOffline: true,
     };
     var ReconnectingWebSocket = /** @class */ (function () {
         function ReconnectingWebSocket(url, protocols, options) {
@@ -354,11 +355,12 @@ var ReconnectingWebSocket = (function () {
          * Enqueue specified data to be transmitted to the server over the WebSocket connection
          */
         ReconnectingWebSocket.prototype.send = function (data) {
+            var _a = this._options.bufferWhileOffline, bufferWhileOffline = _a === void 0 ? DEFAULT.bufferWhileOffline : _a;
             if (this._ws && this._ws.readyState === this.OPEN) {
                 this._debug('send', data);
                 this._ws.send(data);
             }
-            else {
+            else if (bufferWhileOffline) {
                 this._debug('enqueue', data);
                 this._messageQueue.push(data);
             }

@@ -576,6 +576,22 @@ test.cb('enqueue messages', t => {
     };
 });
 
+test.cb('not enqueue messages if bufferWhileOffline is false', t => {
+    const ws = new ReconnectingWebSocket(URL, undefined, {
+        maxRetries: 0,
+        bufferWhileOffline: false,
+    });
+    const count = 10;
+    const message = 'message';
+    for (let i = 0; i < count; i++) ws.send('message');
+
+    ws.onerror = () => {
+        t.is(ws.bufferedAmount, 0);
+        t.pass();
+        t.end();
+    };
+});
+
 test.cb('enqueue messages before websocket initialization with expected order', t => {
     const wss = new WebSocketServer({port: PORT});
     const ws = new ReconnectingWebSocket(URL);

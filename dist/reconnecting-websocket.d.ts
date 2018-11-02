@@ -17,6 +17,7 @@ export declare type Options = {
     connectionTimeout?: number;
     maxRetries?: number;
     debug?: boolean;
+    bufferWhileOffline?: boolean;
 };
 export declare type UrlProvider = string | (() => string) | (() => Promise<string>);
 export declare type Message = string | ArrayBuffer | Blob | ArrayBufferView;
