@@ -37,6 +37,7 @@ export type Options = {
     connectionTimeout?: number;
     maxRetries?: number;
     debug?: boolean;
+    bufferWhileOffline?: boolean;
 };
 
 const DEFAULT = {
@@ -47,6 +48,7 @@ const DEFAULT = {
     connectionTimeout: 4000,
     maxRetries: Infinity,
     debug: false,
+    bufferWhileOffline: true,
 };
 
 export type UrlProvider = string | (() => string) | (() => Promise<string>);
@@ -243,10 +245,11 @@ export default class ReconnectingWebSocket {
      * Enqueue specified data to be transmitted to the server over the WebSocket connection
      */
     public send(data: Message) {
+        const {bufferWhileOffline = DEFAULT.bufferWhileOffline} = this._options;
         if (this._ws && this._ws.readyState === this.OPEN) {
             this._debug('send', data);
             this._ws.send(data);
-        } else {
+        } else if (bufferWhileOffline) {
             this._debug('enqueue', data);
             this._messageQueue.push(data);
         }
