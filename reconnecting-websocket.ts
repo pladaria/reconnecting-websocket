@@ -292,7 +292,7 @@ export default class ReconnectingWebSocket {
             minReconnectionDelay = DEFAULT.minReconnectionDelay,
             maxReconnectionDelay = DEFAULT.maxReconnectionDelay,
         } = this._options;
-        let delay = minReconnectionDelay;
+        let delay = 0;
         if (this._retryCount > 0) {
             delay =
                 minReconnectionDelay * Math.pow(reconnectionDelayGrowFactor, this._retryCount - 1);
