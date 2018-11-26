@@ -104,6 +104,7 @@ type Options = {
     minUptime?: number; // min time in ms to consider connection as stable
     connectionTimeout?: number; // retry connect if not connected after this time, in ms
     maxRetries?: number; // maximum number of retries
+    maxEnqueuedMessages?: number; // maximum number of messages to buffer until reconnection
     debug?: boolean; // enables debug output
 };
 ```
@@ -118,6 +119,7 @@ reconnectionDelayGrowFactor: 1.3,
 minUptime: 5000,
 connectionTimeout: 4000,
 maxRetries: Infinity,
+maxEnqueuedMessages: Infinity,
 debug: false,
 ```
 

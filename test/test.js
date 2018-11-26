@@ -567,10 +567,27 @@ test.cb('enqueue messages', t => {
     });
     const count = 10;
     const message = 'message';
-    for (let i = 0; i < count; i++) ws.send('message');
+    for (let i = 0; i < count; i++) ws.send(message);
 
     ws.onerror = () => {
         t.is(ws.bufferedAmount, message.length * count);
+        t.pass();
+        t.end();
+    };
+});
+
+test.cb('respect maximum enqueued messages', t => {
+    const queueSize = 2;
+    const ws = new ReconnectingWebSocket(URL, undefined, {
+        maxRetries: 0,
+        maxEnqueuedMessages: queueSize,
+    });
+    const count = 10;
+    const message = 'message';
+    for (let i = 0; i < count; i++) ws.send(message);
+
+    ws.onerror = () => {
+        t.is(ws.bufferedAmount, message.length * queueSize);
         t.pass();
         t.end();
     };

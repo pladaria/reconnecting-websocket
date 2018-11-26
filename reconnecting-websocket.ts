@@ -36,6 +36,7 @@ export type Options = {
     minUptime?: number;
     connectionTimeout?: number;
     maxRetries?: number;
+    maxEnqueuedMessages?: number;
     debug?: boolean;
 };
 
@@ -46,6 +47,7 @@ const DEFAULT = {
     reconnectionDelayGrowFactor: 1.3,
     connectionTimeout: 4000,
     maxRetries: Infinity,
+    maxEnqueuedMessages: Infinity,
     debug: false,
 };
 
@@ -247,8 +249,11 @@ export default class ReconnectingWebSocket {
             this._debug('send', data);
             this._ws.send(data);
         } else {
-            this._debug('enqueue', data);
-            this._messageQueue.push(data);
+            const {maxEnqueuedMessages = DEFAULT.maxEnqueuedMessages} = this._options;
+            if (this._messageQueue.length < maxEnqueuedMessages) {
+                this._debug('enqueue', data);
+                this._messageQueue.push(data);
+            }
         }
     }
 
