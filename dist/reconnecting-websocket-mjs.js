@@ -73,7 +73,7 @@ var getGlobalWebSocket = function () {
 /**
  * Returns true if given argument looks like a WebSocket class
  */
-var isWebSocket = function (w) { return typeof w === 'function' && w.CLOSING === 2; };
+var isWebSocket = function (w) { return typeof w !== 'undefined' && !!w && w.CLOSING === 2; };
 var DEFAULT = {
     maxReconnectionDelay: 10000,
     minReconnectionDelay: 1000 + Math.random() * 4000,
@@ -445,6 +445,7 @@ var ReconnectingWebSocket = /** @class */ (function () {
             .then(function (url) {
             // close could be called before creating the ws
             if (_this._closeCalled) {
+                _this._connectLock = false;
                 return;
             }
             _this._debug('connect', { url: url, protocols: _this._protocols });

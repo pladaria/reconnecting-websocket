@@ -75,7 +75,7 @@ define(function () { 'use strict';
     /**
      * Returns true if given argument looks like a WebSocket class
      */
-    var isWebSocket = function (w) { return typeof w === 'function' && w.CLOSING === 2; };
+    var isWebSocket = function (w) { return typeof w !== 'undefined' && !!w && w.CLOSING === 2; };
     var DEFAULT = {
         maxReconnectionDelay: 10000,
         minReconnectionDelay: 1000 + Math.random() * 4000,
