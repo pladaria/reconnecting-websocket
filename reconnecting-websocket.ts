@@ -282,7 +282,7 @@ export default class ReconnectingWebSocket {
         if (this._options.debug) {
             // not using spread because compiled version uses Symbols
             // tslint:disable-next-line
-            console.log.apply(console, ['RWS>'].concat(args));
+            console.log.apply(console, ['RWS>', ...args]);
         }
     }
 
