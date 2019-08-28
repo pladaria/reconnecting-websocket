@@ -30,6 +30,23 @@ test('throws with missing constructor', t => {
     });
 });
 
+test('does not throw with object-based constructor', t => {
+    // In certain versions of iOS Safari, `typeof WebSocket` returns 'object',
+    // so we want to make sure that it works for those
+    global.WebSocket = {CLOSING: 2};
+    t.is(typeof global.WebSocket, 'object');
+
+    new ReconnectingWebSocket(URL, undefined);
+    t.pass();
+});
+
+test('throws with non-constructor object', t => {
+    global.WebSocket = {};
+    t.throws(() => {
+        new ReconnectingWebSocket(URL, undefined);
+    });
+});
+
 test('throws if not created with `new`', t => {
     t.throws(() => {
         ReconnectingWebSocket(URL, undefined);
@@ -685,7 +702,7 @@ test.cb('closing from the other side should allow to keep closed', t => {
     });
 });
 
-test.cb('reconnection delay grow factor', t => {
+test.cb.only('reconnection delay grow factor', t => {
     const ws = new ReconnectingWebSocket('wss://bad.url', [], {
         minReconnectionDelay: 100,
         maxReconnectionDelay: 1000,
