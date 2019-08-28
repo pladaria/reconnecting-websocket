@@ -702,7 +702,7 @@ test.cb('closing from the other side should allow to keep closed', t => {
     });
 });
 
-test.cb('reconnection delay grow factor', t => {
+test.cb.only('reconnection delay grow factor', t => {
     const ws = new ReconnectingWebSocket('wss://bad.url', [], {
         minReconnectionDelay: 100,
         maxReconnectionDelay: 1000,

@@ -59,6 +59,7 @@ export type ListenersMap = {
     open: Array<WebSocketEventListenerMap['open']>;
     close: Array<WebSocketEventListenerMap['close']>;
 };
+
 export default class ReconnectingWebSocket {
     private _ws?: WebSocket;
     private _listeners: ListenersMap = {
@@ -355,7 +356,6 @@ export default class ReconnectingWebSocket {
             .then(url => {
                 // close could be called before creating the ws
                 if (this._closeCalled) {
-                    this._connectLock = false;
                     return;
                 }
                 this._debug('connect', {url, protocols: this._protocols});
