@@ -22,7 +22,7 @@ const getGlobalWebSocket = (): WebSocket | undefined => {
 /**
  * Returns true if given argument looks like a WebSocket class
  */
-const isWebSocket = (w: any) => typeof w === 'function' && w.CLOSING === 2;
+const isWebSocket = (w: any) => typeof w !== 'undefined' && !!w && w.CLOSING === 2;
 
 export type Event = Event;
 export type ErrorEvent = ErrorEvent;
