@@ -16,6 +16,7 @@ export declare type Options = {
     minUptime?: number;
     connectionTimeout?: number;
     maxRetries?: number;
+    maxEnqueuedMessages?: number;
     debug?: boolean;
 };
 export declare type UrlProvider = string | (() => string) | (() => Promise<string>);
