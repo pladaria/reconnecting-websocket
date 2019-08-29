@@ -204,7 +204,7 @@ export default class ReconnectingWebSocket {
     /**
      * An event listener to be called when an error occurs
      */
-    public onerror?: (event: Event) => void = undefined;
+    public onerror?: (event: ErrorEvent) => void = undefined;
 
     /**
      * An event listener to be called when a message is received from the server
