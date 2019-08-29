@@ -19,11 +19,6 @@ const getGlobalWebSocket = (): WebSocket | undefined => {
     }
 };
 
-/**
- * Returns true if given argument looks like a WebSocket class
- */
-const isWebSocket = (w: any) => typeof w !== 'undefined' && !!w && w.CLOSING === 2;
-
 export type Event = Event;
 export type ErrorEvent = ErrorEvent;
 export type CloseEvent = CloseEvent;
@@ -353,9 +348,7 @@ export default class ReconnectingWebSocket {
 
         this._debug('connect', this._retryCount);
         this._removeListeners();
-        if (!isWebSocket(WebSocket)) {
-            throw Error('No valid WebSocket class provided');
-        }
+
         this._wait()
             .then(() => this._getNextUrl(this._url))
             .then(url => {
