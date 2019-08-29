@@ -725,6 +725,7 @@ test.cb('reconnection delay grow factor', t => {
         maxReconnectionDelay: 1000,
         reconnectionDelayGrowFactor: 2,
     });
+    t.is(ws._getNextDelay(), 0);
     const expected = [100, 200, 400, 800, 1000, 1000];
     let retry = 0;
     ws.addEventListener('error', e => {
