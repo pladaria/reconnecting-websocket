@@ -100,6 +100,7 @@ define(function () { 'use strict';
         reconnectionDelayGrowFactor: 1.3,
         connectionTimeout: 4000,
         maxRetries: Infinity,
+        maxEnqueuedMessages: Infinity,
         debug: false,
     };
     var ReconnectingWebSocket = /** @class */ (function () {
@@ -375,8 +376,11 @@ define(function () { 'use strict';
                 this._ws.send(data);
             }
             else {
-                this._debug('enqueue', data);
-                this._messageQueue.push(data);
+                var _a = this._options.maxEnqueuedMessages, maxEnqueuedMessages = _a === void 0 ? DEFAULT.maxEnqueuedMessages : _a;
+                if (this._messageQueue.length < maxEnqueuedMessages) {
+                    this._debug('enqueue', data);
+                    this._messageQueue.push(data);
+                }
             }
         };
         /**
