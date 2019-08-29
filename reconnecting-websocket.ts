@@ -37,6 +37,7 @@ export type Options = {
     connectionTimeout?: number;
     maxRetries?: number;
     maxEnqueuedMessages?: number;
+    startClosed?: boolean;
     debug?: boolean;
 };
 
@@ -48,6 +49,7 @@ const DEFAULT = {
     connectionTimeout: 4000,
     maxRetries: Infinity,
     maxEnqueuedMessages: Infinity,
+    startClosed: false,
     debug: false,
 };
 
@@ -87,6 +89,9 @@ export default class ReconnectingWebSocket {
         this._url = url;
         this._protocols = protocols;
         this._options = options;
+        if (this._options.startClosed) {
+            this._shouldReconnect = false;
+        }
         this._connect();
     }
 
@@ -176,7 +181,12 @@ export default class ReconnectingWebSocket {
      * The current state of the connection; this is one of the Ready state constants
      */
     get readyState(): number {
-        return this._ws ? this._ws.readyState : ReconnectingWebSocket.CONNECTING;
+        if (this._ws) {
+            return this._ws.readyState;
+        }
+        return this._options.startClosed
+            ? ReconnectingWebSocket.CLOSED
+            : ReconnectingWebSocket.CONNECTING;
     }
 
     /**

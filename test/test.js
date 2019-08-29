@@ -411,6 +411,56 @@ test.cb('calling to reconnect when not ready', t => {
     });
 });
 
+test.cb('start closed', t => {
+    const anyMessageText = 'hello';
+    const anyProtocol = 'foobar';
+
+    const wss = new WebSocketServer({port: PORT});
+    wss.on('connection', ws => {
+        ws.on('message', msg => {
+            ws.send(msg);
+        });
+    });
+    wss.on('error', () => {
+        t.fail();
+    });
+
+    t.plan(8);
+
+    const ws = new ReconnectingWebSocket(URL, anyProtocol, {
+        minReconnectionDelay: 100,
+        maxReconnectionDelay: 200,
+        startClosed: true,
+    });
+
+    t.is(ws.readyState, ws.CLOSED);
+
+    setTimeout(() => {
+        t.is(ws.readyState, ws.CLOSED);
+
+        ws.reconnect();
+
+        ws.addEventListener('open', () => {
+            t.is(ws.protocol, anyProtocol);
+            t.is(ws.readyState, ws.OPEN);
+            ws.send(anyMessageText);
+        });
+
+        ws.addEventListener('message', msg => {
+            t.is(msg.data, anyMessageText);
+            ws.close(1000, '');
+            t.is(ws.readyState, ws.CLOSING);
+        });
+
+        ws.addEventListener('close', () => {
+            t.is(ws.readyState, ws.CLOSED);
+            t.is(ws.url, URL);
+            wss.close();
+            setTimeout(() => t.end(), 1000);
+        });
+    }, 300);
+});
+
 test.cb('connect, send, receive, close', t => {
     const anyMessageText = 'hello';
     const anyProtocol = 'foobar';

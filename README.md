@@ -105,6 +105,7 @@ type Options = {
     connectionTimeout?: number; // retry connect if not connected after this time, in ms
     maxRetries?: number; // maximum number of retries
     maxEnqueuedMessages?: number; // maximum number of messages to buffer until reconnection
+    startClosed?: boolean; // start websocket in CLOSED state, call `.reconnect()` to connect
     debug?: boolean; // enables debug output
 };
 ```
@@ -120,6 +121,7 @@ minUptime: 5000,
 connectionTimeout: 4000,
 maxRetries: Infinity,
 maxEnqueuedMessages: Infinity,
+startClosed: false,
 debug: false,
 ```
 
