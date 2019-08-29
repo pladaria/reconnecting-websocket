@@ -1,4 +1,4 @@
-# next
+# 4.2.0
 
 -   Upgrade dependencies
 -   #97 Support a Max Queue Size for Buffered Messages
