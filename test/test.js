@@ -462,6 +462,48 @@ test.cb('start closed', t => {
     }, 300);
 });
 
+// FIXME: currently hangs -- needs a defined action on pulling an
+// invalid URL from _getNextUrl
+test.cb.skip('connect with malformed url-provider', t => {
+    const anyMessageText = 'hello';
+    const anyProtocol = 'foobar';
+
+    const wss = new WebSocketServer({port: PORT});
+    wss.on('connection', ws => {
+        t.fail();
+    });
+    wss.on('error', () => {
+        t.fail();
+    });
+
+    t.plan(3);
+
+    // Also reproducible with () => 123
+    const ws = new ReconnectingWebSocket(() => Promise.resolve(123), anyProtocol, {
+        minReconnectionDelay: 100,
+        maxReconnectionDelay: 200,
+    });
+    t.is(ws.readyState, ws.CONNECTING);
+    console.log(1);
+
+    ws.addEventListener('open', () => {
+        t.fail();
+    });
+
+    ws.addEventListener('message', msg => {
+        t.fail();
+    });
+
+    ws.addEventListener('close', () => {
+        t.is(ws.readyState, ws.CLOSED);
+        console.log(2);
+        t.is(ws.url, URL); // TODO
+        console.log(3);
+        wss.close();
+        setTimeout(() => t.end(), 1000);
+    });
+});
+
 test.cb('connect, send, receive, close', t => {
     const anyMessageText = 'hello';
     const anyProtocol = 'foobar';

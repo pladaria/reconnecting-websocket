@@ -324,7 +324,7 @@ export default class ReconnectingWebSocket {
         });
     }
 
-    private _parseUrl(url: unknown): string | Promise<string> {
+    private _parseUrl(url: unknown): string | Promise<unknown> {
         const isFunction = (value: unknown): value is Function => typeof value === 'function';
 
         const isObject = (value: unknown): value is Object =>
@@ -333,17 +333,13 @@ export default class ReconnectingWebSocket {
         const isPromise = (value: unknown): value is Promise<unknown> =>
             isObject(value) && isFunction((value as any).then);
 
-        if (typeof url === 'string') {
+        if (typeof url === 'string' || isPromise(url)) {
             return url;
-        }
-        if (isPromise(url)) {
-            // TODO: nobody likes a liar
-            return url as Promise<string>;
         }
         throw Error('Invalid URL');
     }
 
-    private _getNextUrl(urlProvider: UrlProvider): Promise<string> {
+    private _getNextUrl(urlProvider: UrlProvider): Promise<unknown> {
         if (typeof urlProvider === 'string') {
             return Promise.resolve(urlProvider);
         }
@@ -383,7 +379,15 @@ export default class ReconnectingWebSocket {
         }
         this._wait()
             .then(() => this._getNextUrl(this._url))
-            .then(url => {
+            .then(unsafeURL => {
+                const parseUrl = (value: unknown): string => {
+                    if (typeof value === 'string') {
+                        return value;
+                    }
+                    throw Error('Invalid URL');
+                };
+                const url = parseUrl(unsafeURL);
+
                 // close could be called before creating the ws
                 if (this._closeCalled) {
                     return;
