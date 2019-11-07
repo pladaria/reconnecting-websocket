@@ -352,9 +352,7 @@ export default class ReconnectingWebSocket {
             if (typeof url === 'string') {
                 return Promise.resolve(url);
             }
-            if (url.then) {
-                return url;
-            }
+            return url;
         }
         throw Error('Invalid URL');
     }
