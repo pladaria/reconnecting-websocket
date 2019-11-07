@@ -325,8 +325,10 @@ export default class ReconnectingWebSocket {
     }
 
     private _parseUrl(url: unknown): string | Promise<unknown> {
+        // tslint:disable-next-line:ban-types
         const isFunction = (value: unknown): value is Function => typeof value === 'function';
 
+        // tslint:disable-next-line:ban-types
         const isObject = (value: unknown): value is Object =>
             value !== null && value !== undefined && typeof value === 'object';
 
