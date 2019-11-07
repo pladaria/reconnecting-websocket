@@ -12,6 +12,8 @@ import {
     WebSocketEventMap,
 } from './events';
 
+export {IEvent as Event, IErrorEvent as ErrorEvent, ICloseEvent as CloseEvent} from './events';
+
 const getGlobalWebSocket = (): WebSocket | undefined => {
     if (typeof WebSocket !== 'undefined') {
         // @ts-ignore
@@ -23,10 +25,6 @@ const getGlobalWebSocket = (): WebSocket | undefined => {
  * Returns true if given argument looks like a WebSocket class
  */
 const isWebSocket = (w: any) => typeof w !== 'undefined' && !!w && w.CLOSING === 2;
-
-export type Event = Event;
-export type ErrorEvent = ErrorEvent;
-export type CloseEvent = CloseEvent;
 
 export type Options = {
     WebSocket?: any;
@@ -326,12 +324,31 @@ export default class ReconnectingWebSocket {
         });
     }
 
+    private _parseUrl(url: unknown): string | Promise<string> {
+        const isFunction = (value: unknown): value is Function => typeof value === 'function';
+
+        const isObject = (value: unknown): value is Object =>
+            value !== null && value !== undefined && typeof value === 'object';
+
+        const isPromise = (value: unknown): value is Promise<unknown> =>
+            isObject(value) && isFunction((value as any).then);
+
+        if (typeof url === 'string') {
+            return url;
+        }
+        if (isPromise(url)) {
+            // TODO: nobody likes a liar
+            return url as Promise<string>;
+        }
+        throw Error('Invalid URL');
+    }
+
     private _getNextUrl(urlProvider: UrlProvider): Promise<string> {
         if (typeof urlProvider === 'string') {
             return Promise.resolve(urlProvider);
         }
         if (typeof urlProvider === 'function') {
-            const url = urlProvider();
+            const url = this._parseUrl(urlProvider());
             if (typeof url === 'string') {
                 return Promise.resolve(url);
             }

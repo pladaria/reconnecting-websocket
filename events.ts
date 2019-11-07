@@ -1,4 +1,20 @@
-export class Event {
+export interface IEvent {
+    target: any;
+    type: string;
+}
+
+export interface IErrorEvent extends IEvent {
+    message: string;
+    error: Error;
+}
+
+export interface ICloseEvent extends IEvent {
+    code: number;
+    reason: string;
+    wasClean: boolean;
+}
+
+export class Event implements IEvent {
     public target: any;
     public type: string;
     constructor(type: string, target: any) {
