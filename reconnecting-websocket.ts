@@ -328,8 +328,7 @@ export default class ReconnectingWebSocket {
         // tslint:disable-next-line:ban-types
         const isFunction = (value: unknown): value is Function => typeof value === 'function';
 
-        // tslint:disable-next-line:ban-types
-        const isObject = (value: unknown): value is Object =>
+        const isObject = (value: unknown): value is object =>
             value !== null && value !== undefined && typeof value === 'object';
 
         const isPromise = (value: unknown): value is Promise<unknown> =>
