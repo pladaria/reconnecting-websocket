@@ -5,9 +5,9 @@
  * License MIT
  */
 import {
-    CloseEvent,
-    ErrorEvent,
-    Event,
+    CloseEvent as _CloseEvent,
+    ErrorEvent as _ErrorEvent,
+    Event as _Event,
     WebSocketEventListenerMap,
     WebSocketEventMap,
 } from './events';
@@ -24,9 +24,9 @@ const getGlobalWebSocket = (): WebSocket | undefined => {
  */
 const isWebSocket = (w: any) => typeof w !== 'undefined' && !!w && w.CLOSING === 2;
 
-export type Event = Event;
-export type ErrorEvent = ErrorEvent;
-export type CloseEvent = CloseEvent;
+export type Event = _Event;
+export type ErrorEvent = _ErrorEvent;
+export type CloseEvent = _CloseEvent;
 
 export type Options = {
     WebSocket?: any;
@@ -388,7 +388,7 @@ export default class ReconnectingWebSocket {
 
     private _handleTimeout() {
         this._debug('timeout event');
-        this._handleError(new ErrorEvent(Error('TIMEOUT'), this));
+        this._handleError(new _ErrorEvent(Error('TIMEOUT'), this));
     }
 
     private _disconnect(code: number = 1000, reason?: string) {
@@ -399,7 +399,7 @@ export default class ReconnectingWebSocket {
         this._removeListeners();
         try {
             this._ws.close(code, reason);
-            this._handleClose(new CloseEvent(code, reason, this));
+            this._handleClose(new _CloseEvent(code, reason, this));
         } catch (error) {
             // ignore
         }
