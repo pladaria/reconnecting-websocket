@@ -24,10 +24,6 @@ const getGlobalWebSocket = (): WebSocket | undefined => {
  */
 const isWebSocket = (w: any) => typeof w !== 'undefined' && !!w && w.CLOSING === 2;
 
-export type Event = Event;
-export type ErrorEvent = ErrorEvent;
-export type CloseEvent = CloseEvent;
-
 export type Options = {
     WebSocket?: any;
     maxReconnectionDelay?: number;
