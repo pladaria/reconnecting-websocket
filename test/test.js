@@ -560,7 +560,7 @@ test.cb('connect, send, receive, reconnect', t => {
 });
 
 test.cb('immediately-failed connection should not timeout', t => {
-    const ws = new ReconnectingWebSocket('ws://thiswillfail.com', null, {
+    const ws = new ReconnectingWebSocket('ws://255.255.255.255', null, {
         maxRetries: 2,
         connectionTimeout: 500,
     });
@@ -570,7 +570,7 @@ test.cb('immediately-failed connection should not timeout', t => {
             t.fail();
         }
         if (ws.retryCount === 2) {
-            setTimeout(() => t.end(), 1500);
+            setTimeout(() => t.end(), 500);
         }
         if (ws.retryCount > 2) {
             t.fail();
@@ -579,9 +579,9 @@ test.cb('immediately-failed connection should not timeout', t => {
 });
 
 test.cb('immediately-failed connection with 0 maxRetries must not retry', t => {
-    const ws = new ReconnectingWebSocket('ws://thiswillfail.com', [], {
+    const ws = new ReconnectingWebSocket('ws://255.255.255.255', [], {
         maxRetries: 0,
-        connectionTimeout: 500,
+        connectionTimeout: 2000,
         minReconnectionDelay: 100,
         maxReconnectionDelay: 200,
     });
@@ -597,7 +597,7 @@ test.cb('immediately-failed connection with 0 maxRetries must not retry', t => {
         }
         setTimeout(() => {
             t.end();
-        }, 500);
+        }, 2100);
     });
 });
 
@@ -771,7 +771,7 @@ test.cb('closing from the other side should allow to keep closed', t => {
 });
 
 test.cb('reconnection delay grow factor', t => {
-    const ws = new ReconnectingWebSocket('wss://bad.url', [], {
+    const ws = new ReconnectingWebSocket('wss://255.255.255.255', [], {
         minReconnectionDelay: 100,
         maxReconnectionDelay: 1000,
         reconnectionDelayGrowFactor: 2,
