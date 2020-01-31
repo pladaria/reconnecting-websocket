@@ -559,13 +559,16 @@ test.cb('connect, send, receive, reconnect', t => {
     });
 });
 
-test.cb('immediately-failed connection should not timeout', t => {
-    const ws = new ReconnectingWebSocket('ws://thiswillfail.com', null, {
+test.cb.only('immediately-failed connection should not timeout', t => {
+    const ws = new ReconnectingWebSocket('ws://x', null, {
         maxRetries: 2,
         connectionTimeout: 500,
+        minReconnectionDelay: 100,
+        maxReconnectionDelay: 100,
     });
 
     ws.addEventListener('error', err => {
+        console.log(ws.retryCount);
         if (err.message === 'TIMEOUT') {
             t.fail();
         }
