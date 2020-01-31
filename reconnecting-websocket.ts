@@ -4,13 +4,8 @@
  * https://github.com/pladaria/reconnecting-websocket
  * License MIT
  */
-import {
-    CloseEvent,
-    ErrorEvent,
-    Event,
-    WebSocketEventListenerMap,
-    WebSocketEventMap,
-} from './events';
+
+import * as Events from './events';
 
 const getGlobalWebSocket = (): WebSocket | undefined => {
     if (typeof WebSocket !== 'undefined') {
@@ -24,9 +19,9 @@ const getGlobalWebSocket = (): WebSocket | undefined => {
  */
 const isWebSocket = (w: any) => typeof w !== 'undefined' && !!w && w.CLOSING === 2;
 
-export type Event = Event;
-export type ErrorEvent = ErrorEvent;
-export type CloseEvent = CloseEvent;
+export type Event = Events.Event;
+export type ErrorEvent = Events.ErrorEvent;
+export type CloseEvent = Events.CloseEvent;
 
 export type Options = {
     WebSocket?: any;
@@ -58,10 +53,10 @@ export type UrlProvider = string | (() => string) | (() => Promise<string>);
 export type Message = string | ArrayBuffer | Blob | ArrayBufferView;
 
 export type ListenersMap = {
-    error: Array<WebSocketEventListenerMap['error']>;
-    message: Array<WebSocketEventListenerMap['message']>;
-    open: Array<WebSocketEventListenerMap['open']>;
-    close: Array<WebSocketEventListenerMap['close']>;
+    error: Array<Events.WebSocketEventListenerMap['error']>;
+    message: Array<Events.WebSocketEventListenerMap['message']>;
+    open: Array<Events.WebSocketEventListenerMap['open']>;
+    close: Array<Events.WebSocketEventListenerMap['close']>;
 };
 
 export default class ReconnectingWebSocket {
@@ -199,12 +194,12 @@ export default class ReconnectingWebSocket {
     /**
      * An event listener to be called when the WebSocket connection's readyState changes to CLOSED
      */
-    public onclose?: (event: CloseEvent) => void = undefined;
+    public onclose?: (event: Events.CloseEvent) => void = undefined;
 
     /**
      * An event listener to be called when an error occurs
      */
-    public onerror?: (event: ErrorEvent) => void = undefined;
+    public onerror?: (event: Events.ErrorEvent) => void = undefined;
 
     /**
      * An event listener to be called when a message is received from the server
@@ -215,7 +210,7 @@ export default class ReconnectingWebSocket {
      * An event listener to be called when the WebSocket connection's readyState changes to OPEN;
      * this indicates that the connection is ready to send and receive data
      */
-    public onopen?: (event: Event) => void = undefined;
+    public onopen?: (event: Events.Event) => void = undefined;
 
     /**
      * Closes the WebSocket connection or connection attempt, if any. If the connection is already
@@ -271,9 +266,9 @@ export default class ReconnectingWebSocket {
     /**
      * Register an event handler of a specific event type
      */
-    public addEventListener<T extends keyof WebSocketEventListenerMap>(
+    public addEventListener<T extends keyof Events.WebSocketEventListenerMap>(
         type: T,
-        listener: WebSocketEventListenerMap[T],
+        listener: Events.WebSocketEventListenerMap[T],
     ): void {
         if (this._listeners[type]) {
             // @ts-ignore
@@ -284,9 +279,9 @@ export default class ReconnectingWebSocket {
     /**
      * Removes an event listener
      */
-    public removeEventListener<T extends keyof WebSocketEventListenerMap>(
+    public removeEventListener<T extends keyof Events.WebSocketEventListenerMap>(
         type: T,
-        listener: WebSocketEventListenerMap[T],
+        listener: Events.WebSocketEventListenerMap[T],
     ): void {
         if (this._listeners[type]) {
             // @ts-ignore
@@ -335,7 +330,7 @@ export default class ReconnectingWebSocket {
             if (typeof url === 'string') {
                 return Promise.resolve(url);
             }
-            if (url.then) {
+            if (!!url.then) {
                 return url;
             }
         }
@@ -388,7 +383,7 @@ export default class ReconnectingWebSocket {
 
     private _handleTimeout() {
         this._debug('timeout event');
-        this._handleError(new ErrorEvent(Error('TIMEOUT'), this));
+        this._handleError(new Events.ErrorEvent(Error('TIMEOUT'), this));
     }
 
     private _disconnect(code: number = 1000, reason?: string) {
@@ -399,7 +394,7 @@ export default class ReconnectingWebSocket {
         this._removeListeners();
         try {
             this._ws.close(code, reason);
-            this._handleClose(new CloseEvent(code, reason, this));
+            this._handleClose(new Events.CloseEvent(code, reason, this));
         } catch (error) {
             // ignore
         }
@@ -410,9 +405,9 @@ export default class ReconnectingWebSocket {
         this._retryCount = 0;
     }
 
-    private _callEventListener<T extends keyof WebSocketEventListenerMap>(
-        event: WebSocketEventMap[T],
-        listener: WebSocketEventListenerMap[T],
+    private _callEventListener<T extends keyof Events.WebSocketEventListenerMap>(
+        event: Events.WebSocketEventMap[T],
+        listener: Events.WebSocketEventListenerMap[T],
     ) {
         if ('handleEvent' in listener) {
             // @ts-ignore
@@ -423,7 +418,7 @@ export default class ReconnectingWebSocket {
         }
     }
 
-    private _handleOpen = (event: Event) => {
+    private _handleOpen = (event: Events.Event) => {
         this._debug('open event');
         const {minUptime = DEFAULT.minUptime} = this._options;
 
@@ -452,7 +447,7 @@ export default class ReconnectingWebSocket {
         this._listeners.message.forEach(listener => this._callEventListener(event, listener));
     };
 
-    private _handleError = (event: ErrorEvent) => {
+    private _handleError = (event: Events.ErrorEvent) => {
         this._debug('error event', event.message);
         this._disconnect(undefined, event.message === 'TIMEOUT' ? 'timeout' : undefined);
 
@@ -465,7 +460,7 @@ export default class ReconnectingWebSocket {
         this._connect();
     };
 
-    private _handleClose = (event: CloseEvent) => {
+    private _handleClose = (event: Events.CloseEvent) => {
         this._debug('close event');
         this._clearTimeouts();
 
