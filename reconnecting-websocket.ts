@@ -72,7 +72,7 @@ export default class ReconnectingWebSocket {
     private _connectTimeout: any;
     private _shouldReconnect = true;
     private _connectLock = false;
-    private _binaryType = 'blob';
+    private _binaryType: BinaryType = 'blob';
     private _closeCalled = false;
     private _messageQueue: Message[] = [];
 
@@ -116,14 +116,13 @@ export default class ReconnectingWebSocket {
         return ReconnectingWebSocket.CLOSED;
     }
 
-    get binaryType(): string {
+    get binaryType() {
         return this._ws ? this._ws.binaryType : this._binaryType;
     }
 
-    set binaryType(value: string) {
+    set binaryType(value: BinaryType) {
         this._binaryType = value;
         if (this._ws) {
-            // @ts-ignore
             this._ws.binaryType = value;
         }
     }
@@ -194,23 +193,23 @@ export default class ReconnectingWebSocket {
     /**
      * An event listener to be called when the WebSocket connection's readyState changes to CLOSED
      */
-    public onclose?: (event: Events.CloseEvent) => void = undefined;
+    public onclose: ((event: Events.CloseEvent) => void) | null = null;
 
     /**
      * An event listener to be called when an error occurs
      */
-    public onerror?: (event: Events.ErrorEvent) => void = undefined;
+    public onerror: ((event: Events.ErrorEvent) => void) | null = null;
 
     /**
      * An event listener to be called when a message is received from the server
      */
-    public onmessage?: (event: MessageEvent) => void = undefined;
+    public onmessage: ((event: MessageEvent) => void) | null = null;
 
     /**
      * An event listener to be called when the WebSocket connection's readyState changes to OPEN;
      * this indicates that the connection is ready to send and receive data
      */
-    public onopen?: (event: Events.Event) => void = undefined;
+    public onopen: ((event: Event) => void) | null = null;
 
     /**
      * Closes the WebSocket connection or connection attempt, if any. If the connection is already
@@ -274,6 +273,16 @@ export default class ReconnectingWebSocket {
             // @ts-ignore
             this._listeners[type].push(listener);
         }
+    }
+
+    public dispatchEvent(event: Event) {
+        const listeners = this._listeners[event.type as keyof Events.WebSocketEventListenerMap];
+        if (listeners) {
+            for (const listener of listeners) {
+                this._callEventListener(event, listener);
+            }
+        }
+        return true;
     }
 
     /**
@@ -372,7 +381,6 @@ export default class ReconnectingWebSocket {
                 this._ws = this._protocols
                     ? new WebSocket(url, this._protocols)
                     : new WebSocket(url);
-                // @ts-ignore
                 this._ws!.binaryType = this._binaryType;
                 this._connectLock = false;
                 this._addListeners();
@@ -418,14 +426,13 @@ export default class ReconnectingWebSocket {
         }
     }
 
-    private _handleOpen = (event: Events.Event) => {
+    private _handleOpen = (event: Event) => {
         this._debug('open event');
         const {minUptime = DEFAULT.minUptime} = this._options;
 
         clearTimeout(this._connectTimeout);
         this._uptimeTimeout = setTimeout(() => this._acceptOpen(), minUptime);
 
-        // @ts-ignore
         this._ws!.binaryType = this._binaryType;
 
         // send enqueued messages (messages sent before websocket open event)
