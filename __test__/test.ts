@@ -1,234 +1,219 @@
-const {spawn} = require('child_process');
-const WebSocket = require('ws');
-const WebSocketServer = require('ws').Server;
-const ReconnectingWebSocket = require('reconnecting-websocket');
+// const {spawn} = require('child_process');
+// @ts-ignore
+import WebSocket from 'ws';
+import ReconnectingWebSocket from '../reconnecting-websocket';
+const WebSocketServer = WebSocket.Server;
 
 const PORT = 50123;
-const PORT_UNRESPONSIVE = 50124;
+// const PORT_UNRESPONSIVE = 50124;
 const URL = `ws://localhost:${PORT}`;
 
 beforeEach(() => {
-    global.WebSocket = WebSocket;
+    (global as any).WebSocket = WebSocket;
 });
 
 afterEach(() => {
-    delete global.WebSocket;
+    delete (global as any).WebSocket;
+    jest.restoreAllMocks();
 });
 
 test('throws with invalid constructor', () => {
-    delete global.WebSocket;
+    delete (global as any).WebSocket;
     expect(() => {
         new ReconnectingWebSocket(URL, undefined, {WebSocket: 123, maxRetries: 0});
     }).toThrow();
 });
 
-// test('throws with missing constructor', t => {
-//     delete global.WebSocket;
-//     t.throws(() => {
-//         new ReconnectingWebSocket(URL, undefined, {maxRetries: 0});
-//     });
-// });
+test('throws with missing constructor', () => {
+    delete (global as any).WebSocket;
+    expect(() => {
+        new ReconnectingWebSocket(URL, undefined, {maxRetries: 0});
+    }).toThrow();
+});
 
-// // FIXME: skipped because produces an unhandled promise error
-// test.skip('does not throw with object-based constructor', t => {
-//     // In certain versions of iOS Safari, `typeof WebSocket` returns 'object',
-//     // so we want to make sure that it works for those
-//     global.WebSocket = {CLOSING: 2};
-//     t.is(typeof global.WebSocket, 'object');
+test('throws with non-constructor object', () => {
+    (global as any).WebSocket = {};
+    expect(() => {
+        new ReconnectingWebSocket(URL, undefined, {maxRetries: 0});
+    }).toThrow();
+});
 
-//     new ReconnectingWebSocket(URL, undefined);
-//     t.pass();
-// });
+test('throws if not created with `new`', () => {
+    expect(() => {
+        // @ts-ignore
+        ReconnectingWebSocket(URL, undefined);
+    }).toThrow(TypeError);
+});
 
-// test('throws with non-constructor object', t => {
-//     global.WebSocket = {};
-//     t.throws(() => {
-//         new ReconnectingWebSocket(URL, undefined, {maxRetries: 0});
-//     });
-// });
+test('global WebSocket is used if available', done => {
+    // @ts-ignore
+    const ws = new ReconnectingWebSocket(URL, undefined, {maxRetries: 0});
+    ws.onerror = () => {
+        // @ts-ignore
+        expect(ws._ws instanceof WebSocket).toBe(true);
+        done();
+    };
+});
 
-// test('throws if not created with `new`', t => {
-//     t.throws(() => {
-//         ReconnectingWebSocket(URL, undefined);
-//     }, TypeError);
-// });
+test('getters when not ready', done => {
+    const ws = new ReconnectingWebSocket(URL, undefined, {
+        maxRetries: 0,
+    });
+    expect(ws.bufferedAmount).toBe(0);
+    expect(ws.protocol).toBe('');
+    expect(ws.url).toBe('');
+    expect(ws.extensions).toBe('');
+    expect(ws.binaryType).toBe('blob');
 
-// test.cb('global WebSocket is used if available', t => {
-//     const ws = new ReconnectingWebSocket(URL, undefined, {
-//         maxRetries: 0,
-//     });
-//     ws.onerror = () => {
-//         t.true(ws._ws instanceof WebSocket);
-//         t.end();
-//     };
-// });
+    ws.onerror = () => {
+        done();
+    };
+});
 
-// test.cb('getters when not ready', t => {
-//     const ws = new ReconnectingWebSocket(URL, undefined, {
-//         maxRetries: 0,
-//     });
-//     t.is(ws.bufferedAmount, 0);
-//     t.is(ws.protocol, '');
-//     t.is(ws.url, '');
-//     t.is(ws.extensions, '');
-//     t.is(ws.binaryType, 'blob');
+test('debug on', done => {
+    const logSpy = jest.spyOn(console, 'log').mockReturnValue();
 
-//     ws.onerror = () => {
-//         t.pass();
-//         t.end();
-//     };
-// });
+    const ws = new ReconnectingWebSocket(URL, undefined, {maxRetries: 0, debug: true});
 
-// test.cb('debug', t => {
-//     const log = console.log;
-//     console.log = () => t.pass();
+    ws.onerror = () => {
+        expect(logSpy).toHaveBeenCalledWith('RWS>', 'connect', 0);
+        done();
+    };
+});
 
-//     const ws = new ReconnectingWebSocket(URL, undefined, {
-//         maxRetries: 0,
-//     });
+test('debug off', done => {
+    const logSpy = jest.spyOn(console, 'log').mockReturnValue();
 
-//     ws.onerror = () => {
-//         ws._options.debug = false;
-//         console.log = log;
-//         t.end();
-//     };
-// });
+    const ws = new ReconnectingWebSocket(URL, undefined, {maxRetries: 0});
 
-// test.cb('pass WebSocket via options', t => {
-//     delete global.WebSocket;
-//     const ws = new ReconnectingWebSocket(URL, undefined, {
-//         WebSocket,
-//         maxRetries: 0,
-//     });
-//     ws.onerror = () => {
-//         t.true(ws._ws instanceof WebSocket);
-//         t.end();
-//     };
-// });
+    ws.onerror = () => {
+        expect(logSpy).not.toHaveBeenCalled();
+        done();
+    };
+});
 
-// test('URL provider', async t => {
-//     const url = 'example.com';
-//     const ws = new ReconnectingWebSocket(URL, undefined, {
-//         maxRetries: 0,
-//     });
-//     t.is(await ws._getNextUrl(url), url, 'string');
-//     t.is(await ws._getNextUrl(() => url), url, '() -> string');
-//     t.is(await ws._getNextUrl(() => Promise.resolve(url)), url, '() -> Promise<string>');
+test('pass WebSocket via options', done => {
+    delete (global as any).WebSocket;
+    const ws = new ReconnectingWebSocket(URL, undefined, {
+        WebSocket,
+        maxRetries: 0,
+    });
+    ws.onerror = () => {
+        // @ts-ignore - accessing private property
+        expect(ws._ws instanceof WebSocket).toBe(true);
+        done();
+    };
+});
 
-//     try {
-//         await ws._getNextUrl(123);
-//         t.fail();
-//     } catch (e) {
-//         t.pass();
-//     }
+test('URL provider', async () => {
+    const url = 'example.com';
+    const ws = new ReconnectingWebSocket(URL, undefined, {maxRetries: 0});
 
-//     try {
-//         await ws._getNextUrl(() => 123);
-//         t.fail();
-//     } catch (e) {
-//         t.pass();
-//     }
-// });
+    // @ts-ignore - accessing private property
+    expect(await ws._getNextUrl(url)).toBe(url);
 
-// test.cb('websocket protocol', t => {
-//     const anyProtocol = 'foobar';
-//     const wss = new WebSocketServer({port: PORT});
-//     const ws = new ReconnectingWebSocket(URL, anyProtocol, {
-//         // minReconnectionDelay: 100,
-//         // maxReconnectionDelay: 200,
-//     });
+    // @ts-ignore - accessing private property
+    expect(await ws._getNextUrl(() => url)).toBe(url);
 
-//     ws.addEventListener('open', () => {
-//         t.is(ws.url, URL);
-//         t.is(ws.protocol, anyProtocol);
-//         ws.close();
-//     });
+    // @ts-ignore - accessing private property
+    expect(await ws._getNextUrl(() => Promise.resolve(url))).toBe(url);
 
-//     ws.addEventListener('close', () => {
-//         wss.close(() => {
-//             setTimeout(() => {
-//                 t.end();
-//             }, 500);
-//         });
-//     });
-// });
+    // @ts-ignore - accessing private property
+    expect(() => ws._getNextUrl(123)).toThrow();
 
-// test.cb('undefined websocket protocol', t => {
-//     const wss = new WebSocketServer({port: PORT});
-//     const ws = new ReconnectingWebSocket(URL, undefined, {});
+    // @ts-ignore - accessing private property
+    expect(() => ws._getNextUrl(() => 123)).toThrow();
+});
 
-//     ws.addEventListener('open', () => {
-//         t.is(ws.url, URL);
-//         t.is(ws.protocol, '');
-//         ws.close();
-//     });
+test('websocket protocol', done => {
+    const anyProtocol = 'foobar';
+    const wss = new WebSocketServer({port: PORT});
+    const ws = new ReconnectingWebSocket(URL, anyProtocol);
 
-//     ws.addEventListener('close', () => {
-//         wss.close(() => {
-//             setTimeout(() => {
-//                 t.end();
-//             }, 500);
-//         });
-//     });
-// });
+    ws.addEventListener('open', () => {
+        expect(ws.url).toBe(URL);
+        expect(ws.protocol).toBe(anyProtocol);
+        ws.close();
+    });
 
-// test.cb('null websocket protocol', t => {
-//     const wss = new WebSocketServer({port: PORT});
-//     const ws = new ReconnectingWebSocket(URL, null, {});
+    ws.addEventListener('close', () => {
+        wss.close(() => {
+            setTimeout(done, 500);
+        });
+    });
+});
 
-//     ws.addEventListener('open', () => {
-//         t.is(ws.url, URL);
-//         t.is(ws.protocol, '');
-//         ws.close();
-//     });
+test('undefined websocket protocol', done => {
+    const wss = new WebSocketServer({port: PORT});
+    const ws = new ReconnectingWebSocket(URL, undefined, {});
 
-//     ws.addEventListener('close', () => {
-//         wss.close(() => {
-//             setTimeout(() => {
-//                 t.end();
-//             }, 100);
-//         });
-//     });
-// });
+    ws.addEventListener('open', () => {
+        expect(ws.url).toBe(URL);
+        expect(ws.protocol).toBe('');
+        ws.close();
+    });
 
-// test('connection status constants', t => {
-//     const ws = new ReconnectingWebSocket(URL, null, {maxRetries: 0});
+    ws.addEventListener('close', () => {
+        wss.close(() => {
+            setTimeout(done, 500);
+        });
+    });
+});
 
-//     t.is(ReconnectingWebSocket.CONNECTING, 0);
-//     t.is(ReconnectingWebSocket.OPEN, 1);
-//     t.is(ReconnectingWebSocket.CLOSING, 2);
-//     t.is(ReconnectingWebSocket.CLOSED, 3);
+test('null websocket protocol', done => {
+    const wss = new WebSocketServer({port: PORT});
 
-//     t.is(ws.CONNECTING, 0);
-//     t.is(ws.OPEN, 1);
-//     t.is(ws.CLOSING, 2);
-//     t.is(ws.CLOSED, 3);
-//     ws.close();
-// });
+    // @ts-ignore - null is not allowed but could be passed in vanilla js
+    const ws = new ReconnectingWebSocket(URL, null, {});
+    ws.addEventListener('open', () => {
+        expect(ws.url).toBe(URL);
+        expect(ws.protocol).toBe('');
+        ws.close();
+    });
 
-// const maxRetriesTest = (count, t) => {
-//     const ws = new ReconnectingWebSocket(URL, null, {
-//         maxRetries: count,
-//         maxReconnectionDelay: 200,
-//     });
-//     t.plan(count + 1);
+    ws.addEventListener('close', () => {
+        wss.close(() => {
+            setTimeout(done, 100);
+        });
+    });
+});
 
-//     ws.addEventListener('error', event => {
-//         t.pass();
-//         if (ws.retryCount === count) {
-//             setTimeout(() => t.end(), 500);
-//         }
-//         if (ws.retryCount > count) {
-//             t.fail(`too many retries: ${ws.retryCount}`);
-//         }
-//     });
-// };
+test('connection status constants', () => {
+    const ws = new ReconnectingWebSocket(URL, undefined, {maxRetries: 0});
 
-// test.cb('max retries: 0', t => maxRetriesTest(0, t));
-// test.cb('max retries: 1', t => maxRetriesTest(1, t));
-// test.cb('max retries: 5', t => maxRetriesTest(5, t));
+    expect(ReconnectingWebSocket.CONNECTING).toBe(0);
+    expect(ReconnectingWebSocket.OPEN).toBe(1);
+    expect(ReconnectingWebSocket.CLOSING).toBe(2);
+    expect(ReconnectingWebSocket.CLOSED).toBe(3);
 
-// test.cb('level0 event listeners are kept after reconnect', t => {
+    expect(ws.CONNECTING).toBe(0);
+    expect(ws.OPEN).toBe(1);
+    expect(ws.CLOSING).toBe(2);
+    expect(ws.CLOSED).toBe(3);
+    ws.close();
+});
+
+const maxRetriesTest = (count: number, done: () => void) => {
+    const ws = new ReconnectingWebSocket(URL, undefined, {
+        maxRetries: count,
+        maxReconnectionDelay: 200,
+    });
+
+    ws.addEventListener('error', () => {
+        if (ws.retryCount === count) {
+            setTimeout(done, 500);
+        }
+        if (ws.retryCount > count) {
+            throw Error(`too many retries: ${ws.retryCount}`);
+        }
+    });
+};
+
+test('max retries: 0', done => maxRetriesTest(0, done));
+test('max retries: 1', done => maxRetriesTest(1, done));
+test('max retries: 5', done => maxRetriesTest(5, done));
+
+// test('level0 event listeners are kept after reconnect', t => {
 //     const ws = new ReconnectingWebSocket(URL, null, {
 //         maxRetries: 4,
 //         reconnectionDelayGrowFactor: 1.2,
@@ -240,12 +225,12 @@ test('throws with invalid constructor', () => {
 //     const handleClose = () => {};
 //     const handleMessage = () => {};
 //     const handleError = () => {
-//         t.is(ws.onopen, handleOpen);
-//         t.is(ws.onclose, handleClose);
-//         t.is(ws.onmessage, handleMessage);
-//         t.is(ws.onerror, handleError);
+//         expect(ws.onopen, handleOpen);
+//         expect(ws.onclose, handleClose);
+//         expect(ws.onmessage, handleMessage);
+//         expect(ws.onerror, handleError);
 //         if (ws.retryCount === 4) {
-//             t.end();
+//             done();
 //         }
 //     };
 
@@ -255,15 +240,15 @@ test('throws with invalid constructor', () => {
 //     ws.onerror = handleError;
 // });
 
-// test.cb('level2 event listeners', t => {
+// test('level2 event listeners', t => {
 //     const anyProtocol = 'foobar';
 //     const wss = new WebSocketServer({port: PORT});
 //     const ws = new ReconnectingWebSocket(URL, anyProtocol, {});
 
 //     ws.addEventListener('open', () => {
-//         t.is(ws.protocol, anyProtocol);
-//         t.is(ws.extensions, '');
-//         t.is(ws.bufferedAmount, 0);
+//         expect(ws.protocol, anyProtocol);
+//         expect(ws.extensions, '');
+//         expect(ws.bufferedAmount, 0);
 //         ws.close();
 //     });
 
@@ -278,22 +263,22 @@ test('throws with invalid constructor', () => {
 
 //     ws.addEventListener('close', () => {
 //         wss.close(() => {
-//             setTimeout(() => t.end(), 500);
+//             setTimeout(() => done(), 500);
 //         });
 //     });
 // });
 
 // // https://developer.mozilla.org/en-US/docs/Web/API/EventListener/handleEvent
-// test.cb('level2 event listeners using object with handleEvent', t => {
+// test('level2 event listeners using object with handleEvent', t => {
 //     const anyProtocol = 'foobar';
 //     const wss = new WebSocketServer({port: PORT});
 //     const ws = new ReconnectingWebSocket(URL, anyProtocol, {});
 
 //     ws.addEventListener('open', {
 //         handleEvent: () => {
-//             t.is(ws.protocol, anyProtocol);
-//             t.is(ws.extensions, '');
-//             t.is(ws.bufferedAmount, 0);
+//             expect(ws.protocol, anyProtocol);
+//             expect(ws.extensions, '');
+//             expect(ws.bufferedAmount, 0);
 //             ws.close();
 //         },
 //     });
@@ -312,12 +297,12 @@ test('throws with invalid constructor', () => {
 //     ws.addEventListener('close', {
 //         handleEvent: () => {
 //             wss.close();
-//             setTimeout(() => t.end(), 500);
+//             setTimeout(() => done(), 500);
 //         },
 //     });
 // });
 
-// test.cb('connection timeout', t => {
+// test('connection timeout', t => {
 //     const proc = spawn('node', [`${__dirname}/unresponsive-server.js`, PORT_UNRESPONSIVE, 5000]);
 //     t.plan(2);
 
@@ -333,53 +318,53 @@ test('throws with invalid constructor', () => {
 //         });
 
 //         ws.addEventListener('error', event => {
-//             t.is(event.message, 'TIMEOUT');
+//             expect(event.message, 'TIMEOUT');
 //             if (ws.retryCount === 1) {
-//                 setTimeout(() => t.end(), 1000);
+//                 setTimeout(() => done(), 1000);
 //             }
 //         });
 //     });
 // });
 
-// test.cb('getters', t => {
+// test('getters', t => {
 //     const anyProtocol = 'foobar';
 //     const wss = new WebSocketServer({port: PORT});
 //     const ws = new ReconnectingWebSocket(URL, anyProtocol, {maxReconnectionDelay: 100});
 
 //     ws.addEventListener('open', () => {
-//         t.is(ws.protocol, anyProtocol);
-//         t.is(ws.extensions, '');
-//         t.is(ws.bufferedAmount, 0);
-//         t.is(ws.binaryType, 'nodebuffer');
+//         expect(ws.protocol, anyProtocol);
+//         expect(ws.extensions, '');
+//         expect(ws.bufferedAmount, 0);
+//         expect(ws.binaryType, 'nodebuffer');
 //         ws.close();
 //     });
 
 //     ws.addEventListener('close', () => {
 //         wss.close();
-//         setTimeout(() => t.end(), 500);
+//         setTimeout(() => done(), 500);
 //     });
 // });
 
-// test.cb('binaryType', t => {
+// test('binaryType', t => {
 //     const wss = new WebSocketServer({port: PORT});
 //     const ws = new ReconnectingWebSocket(URL, undefined, {minReconnectionDelay: 0});
 
-//     t.is(ws.binaryType, 'blob');
+//     expect(ws.binaryType, 'blob');
 //     ws.binaryType = 'arraybuffer';
 //     ws.addEventListener('open', () => {
-//         t.is(ws.binaryType, 'arraybuffer', 'assigned after open');
+//         expect(ws.binaryType, 'arraybuffer', 'assigned after open');
 //         ws.binaryType = 'nodebuffer';
-//         t.is(ws.binaryType, 'nodebuffer');
+//         expect(ws.binaryType, 'nodebuffer');
 //         ws.close();
 //     });
 
 //     ws.addEventListener('close', () => {
 //         wss.close();
-//         setTimeout(() => t.end(), 500);
+//         setTimeout(() => done(), 500);
 //     });
 // });
 
-// test.cb('calling to close multiple times', t => {
+// test('calling to close multiple times', t => {
 //     const wss = new WebSocketServer({port: PORT});
 //     const ws = new ReconnectingWebSocket(URL, undefined, {});
 
@@ -391,11 +376,11 @@ test('throws with invalid constructor', () => {
 
 //     ws.addEventListener('close', () => {
 //         wss.close();
-//         setTimeout(() => t.end(), 500);
+//         setTimeout(() => done(), 500);
 //     });
 // });
 
-// test.cb('calling to reconnect when not ready', t => {
+// test('calling to reconnect when not ready', t => {
 //     const wss = new WebSocketServer({port: PORT});
 //     const ws = new ReconnectingWebSocket(URL, undefined, {});
 //     ws.reconnect();
@@ -407,11 +392,11 @@ test('throws with invalid constructor', () => {
 
 //     ws.addEventListener('close', () => {
 //         wss.close();
-//         setTimeout(() => t.end(), 500);
+//         setTimeout(() => done(), 500);
 //     });
 // });
 
-// test.cb('start closed', t => {
+// test('start closed', t => {
 //     const anyMessageText = 'hello';
 //     const anyProtocol = 'foobar';
 
@@ -433,35 +418,35 @@ test('throws with invalid constructor', () => {
 //         startClosed: true,
 //     });
 
-//     t.is(ws.readyState, ws.CLOSED);
+//     expect(ws.readyState, ws.CLOSED);
 
 //     setTimeout(() => {
-//         t.is(ws.readyState, ws.CLOSED);
+//         expect(ws.readyState, ws.CLOSED);
 
 //         ws.reconnect();
 
 //         ws.addEventListener('open', () => {
-//             t.is(ws.protocol, anyProtocol);
-//             t.is(ws.readyState, ws.OPEN);
+//             expect(ws.protocol, anyProtocol);
+//             expect(ws.readyState, ws.OPEN);
 //             ws.send(anyMessageText);
 //         });
 
 //         ws.addEventListener('message', msg => {
-//             t.is(msg.data, anyMessageText);
+//             expect(msg.data, anyMessageText);
 //             ws.close(1000, '');
-//             t.is(ws.readyState, ws.CLOSING);
+//             expect(ws.readyState, ws.CLOSING);
 //         });
 
 //         ws.addEventListener('close', () => {
-//             t.is(ws.readyState, ws.CLOSED);
-//             t.is(ws.url, URL);
+//             expect(ws.readyState, ws.CLOSED);
+//             expect(ws.url, URL);
 //             wss.close();
-//             setTimeout(() => t.end(), 1000);
+//             setTimeout(() => done(), 1000);
 //         });
 //     }, 300);
 // });
 
-// test.cb('connect, send, receive, close', t => {
+// test('connect, send, receive, close', t => {
 //     const anyMessageText = 'hello';
 //     const anyProtocol = 'foobar';
 
@@ -481,29 +466,29 @@ test('throws with invalid constructor', () => {
 //         minReconnectionDelay: 100,
 //         maxReconnectionDelay: 200,
 //     });
-//     t.is(ws.readyState, ws.CONNECTING);
+//     expect(ws.readyState, ws.CONNECTING);
 
 //     ws.addEventListener('open', () => {
-//         t.is(ws.protocol, anyProtocol);
-//         t.is(ws.readyState, ws.OPEN);
+//         expect(ws.protocol, anyProtocol);
+//         expect(ws.readyState, ws.OPEN);
 //         ws.send(anyMessageText);
 //     });
 
 //     ws.addEventListener('message', msg => {
-//         t.is(msg.data, anyMessageText);
+//         expect(msg.data, anyMessageText);
 //         ws.close(1000, '');
-//         t.is(ws.readyState, ws.CLOSING);
+//         expect(ws.readyState, ws.CLOSING);
 //     });
 
 //     ws.addEventListener('close', () => {
-//         t.is(ws.readyState, ws.CLOSED);
-//         t.is(ws.url, URL);
+//         expect(ws.readyState, ws.CLOSED);
+//         expect(ws.url, URL);
 //         wss.close();
-//         setTimeout(() => t.end(), 1000);
+//         setTimeout(() => done(), 1000);
 //     });
 // });
 
-// test.cb('connect, send, receive, reconnect', t => {
+// test('connect, send, receive, reconnect', t => {
 //     const anyMessageText = 'hello';
 //     const anyProtocol = 'foobar';
 
@@ -529,36 +514,36 @@ test('throws with invalid constructor', () => {
 
 //     ws.onopen = () => {
 //         currentRound++;
-//         t.is(ws.protocol, anyProtocol);
-//         t.is(ws.readyState, ws.OPEN);
+//         expect(ws.protocol, anyProtocol);
+//         expect(ws.readyState, ws.OPEN);
 //         ws.send(anyMessageText);
 //     };
 
 //     ws.onmessage = msg => {
-//         t.is(msg.data, anyMessageText);
+//         expect(msg.data, anyMessageText);
 //         if (currentRound < totalRounds) {
 //             ws.reconnect(1000, 'reconnect');
-//             t.is(ws.retryCount, 0);
+//             expect(ws.retryCount, 0);
 //         } else {
 //             ws.close(1000, 'close');
 //         }
-//         t.is(ws.readyState, ws.CLOSING);
+//         expect(ws.readyState, ws.CLOSING);
 //     };
 
 //     ws.addEventListener('close', event => {
-//         t.is(ws.url, URL);
+//         expect(ws.url, URL);
 //         if (currentRound >= totalRounds) {
-//             t.is(ws.readyState, ws.CLOSED);
+//             expect(ws.readyState, ws.CLOSED);
 //             wss.close();
-//             setTimeout(() => t.end(), 1000);
-//             t.is(event.reason, 'close');
+//             setTimeout(() => done(), 1000);
+//             expect(event.reason, 'close');
 //         } else {
-//             t.is(event.reason, 'reconnect');
+//             expect(event.reason, 'reconnect');
 //         }
 //     });
 // });
 
-// test.cb('immediately-failed connection should not timeout', t => {
+// test('immediately-failed connection should not timeout', t => {
 //     const ws = new ReconnectingWebSocket('ws://255.255.255.255', null, {
 //         maxRetries: 2,
 //         connectionTimeout: 500,
@@ -569,7 +554,7 @@ test('throws with invalid constructor', () => {
 //             t.fail();
 //         }
 //         if (ws.retryCount === 2) {
-//             setTimeout(() => t.end(), 500);
+//             setTimeout(() => done(), 500);
 //         }
 //         if (ws.retryCount > 2) {
 //             t.fail();
@@ -577,7 +562,7 @@ test('throws with invalid constructor', () => {
 //     });
 // });
 
-// test.cb('immediately-failed connection with 0 maxRetries must not retry', t => {
+// test('immediately-failed connection with 0 maxRetries must not retry', t => {
 //     const ws = new ReconnectingWebSocket('ws://255.255.255.255', [], {
 //         maxRetries: 0,
 //         connectionTimeout: 2000,
@@ -595,12 +580,12 @@ test('throws with invalid constructor', () => {
 //             t.fail();
 //         }
 //         setTimeout(() => {
-//             t.end();
+//             done();
 //         }, 2100);
 //     });
 // });
 
-// test.cb('connect and close before establishing connection', t => {
+// test('connect and close before establishing connection', t => {
 //     const wss = new WebSocketServer({port: PORT});
 //     const ws = new ReconnectingWebSocket(URL, undefined, {
 //         minReconnectionDelay: 100,
@@ -624,11 +609,11 @@ test('throws with invalid constructor', () => {
 //     setTimeout(() => {
 //         // wait a little to be sure no unexpected open or close events happen
 //         wss.close();
-//         t.end();
+//         done();
 //     }, 1000);
 // });
 
-// test.cb('enqueue messages', t => {
+// test('enqueue messages', t => {
 //     const ws = new ReconnectingWebSocket(URL, undefined, {
 //         maxRetries: 0,
 //     });
@@ -637,13 +622,13 @@ test('throws with invalid constructor', () => {
 //     for (let i = 0; i < count; i++) ws.send(message);
 
 //     ws.onerror = () => {
-//         t.is(ws.bufferedAmount, message.length * count);
+//         expect(ws.bufferedAmount, message.length * count);
 //         t.pass();
-//         t.end();
+//         done();
 //     };
 // });
 
-// test.cb('respect maximum enqueued messages', t => {
+// test('respect maximum enqueued messages', t => {
 //     const queueSize = 2;
 //     const ws = new ReconnectingWebSocket(URL, undefined, {
 //         maxRetries: 0,
@@ -654,31 +639,31 @@ test('throws with invalid constructor', () => {
 //     for (let i = 0; i < count; i++) ws.send(message);
 
 //     ws.onerror = () => {
-//         t.is(ws.bufferedAmount, message.length * queueSize);
+//         expect(ws.bufferedAmount, message.length * queueSize);
 //         t.pass();
-//         t.end();
+//         done();
 //     };
 // });
 
-// test.cb('enqueue messages before websocket initialization with expected order', t => {
+// test('enqueue messages before websocket initialization with expected order', t => {
 //     const wss = new WebSocketServer({port: PORT});
 //     const ws = new ReconnectingWebSocket(URL);
 
 //     const messages = ['message1', 'message2', 'message3'];
 
 //     messages.forEach(m => ws.send(m));
-//     t.is(ws._messageQueue.length, messages.length);
+//     expect(ws._messageQueue.length, messages.length);
 
-//     t.is(ws.bufferedAmount, messages.reduce((a, m) => a + m.length, 0));
+//     expect(ws.bufferedAmount, messages.reduce((a, m) => a + m.length, 0));
 
 //     let i = 0;
 //     wss.on('connection', client => {
 //         client.on('message', data => {
 //             if (data === 'ok') {
-//                 t.is(i, messages.length, 'enqueued messages are sent first');
+//                 expect(i, messages.length, 'enqueued messages are sent first');
 //                 ws.close();
 //             } else {
-//                 t.is(data, messages[i]);
+//                 expect(data, messages[i]);
 //                 i++;
 //             }
 //         });
@@ -690,12 +675,12 @@ test('throws with invalid constructor', () => {
 
 //     ws.addEventListener('close', () => {
 //         wss.close(() => {
-//             t.end();
+//             done();
 //         });
 //     });
 // });
 
-// test.cb('closing from the other side should reconnect', t => {
+// test('closing from the other side should reconnect', t => {
 //     const wss = new WebSocketServer({port: PORT});
 //     const ws = new ReconnectingWebSocket(URL, undefined, {
 //         minReconnectionDelay: 100,
@@ -726,7 +711,7 @@ test('throws with invalid constructor', () => {
 //             // wait a little to ensure no new connections are opened
 //             setTimeout(() => {
 //                 wss.close(() => {
-//                     t.end();
+//                     done();
 //                 });
 //             }, 500);
 //         }
@@ -736,7 +721,7 @@ test('throws with invalid constructor', () => {
 //     });
 // });
 
-// test.cb('closing from the other side should allow to keep closed', t => {
+// test('closing from the other side should allow to keep closed', t => {
 //     const wss = new WebSocketServer({port: PORT});
 //     const ws = new ReconnectingWebSocket(URL, undefined, {
 //         minReconnectionDelay: 100,
@@ -763,34 +748,34 @@ test('throws with invalid constructor', () => {
 //             // close connection (and keep closed)
 //             ws.close();
 //             setTimeout(() => {
-//                 wss.close(() => t.end());
+//                 wss.close(() => done());
 //             }, 1000);
 //         }
 //     });
 // });
 
-// test.cb('reconnection delay grow factor', t => {
+// test('reconnection delay grow factor', t => {
 //     const ws = new ReconnectingWebSocket('wss://255.255.255.255', [], {
 //         minReconnectionDelay: 100,
 //         maxReconnectionDelay: 1000,
 //         reconnectionDelayGrowFactor: 2,
 //     });
-//     t.is(ws._getNextDelay(), 0);
+//     expect(ws._getNextDelay(), 0);
 //     const expected = [100, 200, 400, 800, 1000, 1000];
 //     let retry = 0;
 //     ws.addEventListener('error', e => {
-//         t.is(ws._getNextDelay(), expected[retry]);
+//         expect(ws._getNextDelay(), expected[retry]);
 //         retry++;
 //         if (retry >= expected.length) {
 //             ws.close();
 //             setTimeout(() => {
-//                 t.end();
+//                 done();
 //             }, 2000);
 //         }
 //     });
 // });
 
-// test.cb('minUptime', t => {
+// test('minUptime', t => {
 //     const wss = new WebSocketServer({port: PORT});
 //     const ws = new ReconnectingWebSocket(URL, [], {
 //         minReconnectionDelay: 100,
@@ -816,7 +801,7 @@ test('throws with invalid constructor', () => {
 //             ws.close();
 //             wss.close(() => {
 //                 setTimeout(() => {
-//                     t.end();
+//                     done();
 //                 }, 1000);
 //             });
 //         }
@@ -824,14 +809,14 @@ test('throws with invalid constructor', () => {
 //     let closeCount = 0;
 //     ws.addEventListener('close', () => {
 //         if (closeCount < expectedDelays.length) {
-//             t.is(ws._getNextDelay(), expectedDelays[closeCount]);
-//             t.is(ws._retryCount, expectedRetryCount[closeCount]);
+//             expect(ws._getNextDelay(), expectedDelays[closeCount]);
+//             expect(ws._retryCount, expectedRetryCount[closeCount]);
 //             closeCount++;
 //         }
 //     });
 // });
 
-// test.cb('reconnect after closing', t => {
+// test('reconnect after closing', t => {
 //     const wss = new WebSocketServer({port: PORT});
 //     const ws = new ReconnectingWebSocket(URL, undefined, {
 //         minReconnectionDelay: 100,
@@ -860,7 +845,7 @@ test('throws with invalid constructor', () => {
 //         if (i === 2) {
 //             wss.close(() => {
 //                 setTimeout(() => {
-//                     t.end();
+//                     done();
 //                 }, 1000);
 //             });
 //         }
@@ -870,7 +855,7 @@ test('throws with invalid constructor', () => {
 //     });
 // });
 
-// // test.cb('reconnect after closing', t => {
+// // test('reconnect after closing', t => {
 // //     const wss = new WebSocketServer({port: PORT});
 // //     const ws = new ReconnectingWebSocket(URL, undefined, {
 // //         minReconnectionDelay: 100,
