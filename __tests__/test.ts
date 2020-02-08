@@ -1,6 +1,6 @@
 // @ts-ignore
 import WebSocket from 'ws';
-import ReconnectingWebSocket, {ErrorEvent, Event} from '../reconnecting-websocket';
+import ReconnectingWebSocket, {ErrorEvent} from '../reconnecting-websocket';
 import {spawn} from 'child_process';
 const WebSocketServer = WebSocket.Server;
 
@@ -221,9 +221,9 @@ test('level0 event listeners are kept after reconnect', done => {
         minReconnectionDelay: 10,
     });
 
-    const handleOpen = () => {};
-    const handleClose = () => {};
-    const handleMessage = () => {};
+    const handleOpen = () => undefined;
+    const handleClose = () => undefined;
+    const handleMessage = () => undefined;
     const handleError = () => {
         expect(ws.onopen).toBe(handleOpen);
         expect(ws.onclose).toBe(handleClose);
@@ -696,7 +696,7 @@ test('closing from the other side should reconnect', done => {
         maxReconnectionDelay: 200,
     });
 
-    let max = 3;
+    const max = 3;
     let i = 0;
     wss.on('connection', (client: WebSocket) => {
         i++;

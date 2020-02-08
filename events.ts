@@ -21,7 +21,7 @@ export class CloseEvent extends Event {
     public code: number;
     public reason: string;
     public wasClean = true;
-    constructor(code: number = 1000, reason: string = '', target: any) {
+    constructor(code = 1000, reason = '', target: any) {
         super('close', target);
         this.code = code;
         this.reason = reason;
