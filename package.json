@@ -7,7 +7,7 @@
     "types": "./dist/reconnecting-websocket.d.ts",
     "scripts": {
         "build": "npm run clean && rollup -c && uglifyjs --compress --mangle -o dist/reconnecting-websocket-iife.min.js dist/reconnecting-websocket-iife.js",
-        "test": "jest",
+        "test": "jest --coverage",
         "clean": "del dist && del coverage && del .nyc_output",
         "report": "nyc report --reporter=html && opn coverage/index.html",
         "coveralls": "cat ./coverage/lcov.info | ./node_modules/.bin/coveralls",
