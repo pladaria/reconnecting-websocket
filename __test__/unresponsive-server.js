@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const net = require('net');
 
 const port = process.argv[2] || 50001;

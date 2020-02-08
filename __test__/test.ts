@@ -1,6 +1,6 @@
 // @ts-ignore
 import WebSocket from 'ws';
-import ReconnectingWebSocket, {ErrorEvent} from '../reconnecting-websocket';
+import ReconnectingWebSocket, {ErrorEvent, Event} from '../reconnecting-websocket';
 import {spawn} from 'child_process';
 const WebSocketServer = WebSocket.Server;
 
