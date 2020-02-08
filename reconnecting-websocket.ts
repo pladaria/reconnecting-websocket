@@ -339,7 +339,8 @@ export default class ReconnectingWebSocket {
             if (typeof url === 'string') {
                 return Promise.resolve(url);
             }
-            if (!!url.then) {
+            // @ts-ignore redundant check
+            if (url.then) {
                 return url;
             }
         }

@@ -1,236 +1,220 @@
-const test = require('ava');
-const {spawn} = require('child_process');
-const WebSocket = require('ws');
-const WebSocketServer = require('ws').Server;
-const ReconnectingWebSocket = require('..');
+// @ts-ignore
+import WebSocket from 'ws';
+import ReconnectingWebSocket, {ErrorEvent, Event} from '../reconnecting-websocket';
+import {spawn} from 'child_process';
+const WebSocketServer = WebSocket.Server;
 
 const PORT = 50123;
-const PORT_UNRESPONSIVE = 50124;
+const PORT_UNRESPONSIVE = '50124';
 const URL = `ws://localhost:${PORT}`;
 
-test.beforeEach(() => {
-    global.WebSocket = WebSocket;
+beforeEach(() => {
+    (global as any).WebSocket = WebSocket;
 });
 
-test.afterEach(() => {
-    delete global.WebSocket;
+afterEach(() => {
+    delete (global as any).WebSocket;
+    jest.restoreAllMocks();
 });
 
-test('throws with invalid constructor', t => {
-    delete global.WebSocket;
-    t.throws(() => {
+test('throws with invalid constructor', () => {
+    delete (global as any).WebSocket;
+    expect(() => {
         new ReconnectingWebSocket(URL, undefined, {WebSocket: 123, maxRetries: 0});
-    });
+    }).toThrow();
 });
 
-test('throws with missing constructor', t => {
-    delete global.WebSocket;
-    t.throws(() => {
+test('throws with missing constructor', () => {
+    delete (global as any).WebSocket;
+    expect(() => {
         new ReconnectingWebSocket(URL, undefined, {maxRetries: 0});
-    });
+    }).toThrow();
 });
 
-// FIXME: skipped because produces an unhandled promise error
-test.skip('does not throw with object-based constructor', t => {
-    // In certain versions of iOS Safari, `typeof WebSocket` returns 'object',
-    // so we want to make sure that it works for those
-    global.WebSocket = {CLOSING: 2};
-    t.is(typeof global.WebSocket, 'object');
-
-    new ReconnectingWebSocket(URL, undefined);
-    t.pass();
-});
-
-test('throws with non-constructor object', t => {
-    global.WebSocket = {};
-    t.throws(() => {
+test('throws with non-constructor object', () => {
+    (global as any).WebSocket = {};
+    expect(() => {
         new ReconnectingWebSocket(URL, undefined, {maxRetries: 0});
-    });
+    }).toThrow();
 });
 
-test('throws if not created with `new`', t => {
-    t.throws(() => {
+test('throws if not created with `new`', () => {
+    expect(() => {
+        // @ts-ignore
         ReconnectingWebSocket(URL, undefined);
-    }, TypeError);
+    }).toThrow(TypeError);
 });
 
-test.cb('global WebSocket is used if available', t => {
-    const ws = new ReconnectingWebSocket(URL, undefined, {
-        maxRetries: 0,
-    });
+test('global WebSocket is used if available', done => {
+    // @ts-ignore
+    const ws = new ReconnectingWebSocket(URL, undefined, {maxRetries: 0});
     ws.onerror = () => {
-        t.true(ws._ws instanceof WebSocket);
-        t.end();
+        // @ts-ignore
+        expect(ws._ws instanceof WebSocket).toBe(true);
+        done();
     };
 });
 
-test.cb('getters when not ready', t => {
+test('getters when not ready', done => {
     const ws = new ReconnectingWebSocket(URL, undefined, {
         maxRetries: 0,
     });
-    t.is(ws.bufferedAmount, 0);
-    t.is(ws.protocol, '');
-    t.is(ws.url, '');
-    t.is(ws.extensions, '');
-    t.is(ws.binaryType, 'blob');
+    expect(ws.bufferedAmount).toBe(0);
+    expect(ws.protocol).toBe('');
+    expect(ws.url).toBe('');
+    expect(ws.extensions).toBe('');
+    expect(ws.binaryType).toBe('blob');
 
     ws.onerror = () => {
-        t.pass();
-        t.end();
+        done();
     };
 });
 
-test.cb('debug', t => {
-    const log = console.log;
-    console.log = () => t.pass();
+test('debug on', done => {
+    const logSpy = jest.spyOn(console, 'log').mockReturnValue();
 
-    const ws = new ReconnectingWebSocket(URL, undefined, {
-        maxRetries: 0,
-    });
+    const ws = new ReconnectingWebSocket(URL, undefined, {maxRetries: 0, debug: true});
 
     ws.onerror = () => {
-        ws._options.debug = false;
-        console.log = log;
-        t.end();
+        expect(logSpy).toHaveBeenCalledWith('RWS>', 'connect', 0);
+        done();
     };
 });
 
-test.cb('pass WebSocket via options', t => {
-    delete global.WebSocket;
+test('debug off', done => {
+    const logSpy = jest.spyOn(console, 'log').mockReturnValue();
+
+    const ws = new ReconnectingWebSocket(URL, undefined, {maxRetries: 0});
+
+    ws.onerror = () => {
+        expect(logSpy).not.toHaveBeenCalled();
+        done();
+    };
+});
+
+test('pass WebSocket via options', done => {
+    delete (global as any).WebSocket;
     const ws = new ReconnectingWebSocket(URL, undefined, {
         WebSocket,
         maxRetries: 0,
     });
     ws.onerror = () => {
-        t.true(ws._ws instanceof WebSocket);
-        t.end();
+        // @ts-ignore - accessing private property
+        expect(ws._ws instanceof WebSocket).toBe(true);
+        done();
     };
 });
 
-test('URL provider', async t => {
+test('URL provider', async () => {
     const url = 'example.com';
-    const ws = new ReconnectingWebSocket(URL, undefined, {
-        maxRetries: 0,
-    });
-    t.is(await ws._getNextUrl(url), url, 'string');
-    t.is(await ws._getNextUrl(() => url), url, '() -> string');
-    t.is(await ws._getNextUrl(() => Promise.resolve(url)), url, '() -> Promise<string>');
+    const ws = new ReconnectingWebSocket(URL, undefined, {maxRetries: 0});
 
-    try {
-        await ws._getNextUrl(123);
-        t.fail();
-    } catch (e) {
-        t.pass();
-    }
+    // @ts-ignore - accessing private property
+    expect(await ws._getNextUrl(url)).toBe(url);
 
-    try {
-        await ws._getNextUrl(() => 123);
-        t.fail();
-    } catch (e) {
-        t.pass();
-    }
+    // @ts-ignore - accessing private property
+    expect(await ws._getNextUrl(() => url)).toBe(url);
+
+    // @ts-ignore - accessing private property
+    expect(await ws._getNextUrl(() => Promise.resolve(url))).toBe(url);
+
+    // @ts-ignore - accessing private property
+    expect(() => ws._getNextUrl(123)).toThrow();
+
+    // @ts-ignore - accessing private property
+    expect(() => ws._getNextUrl(() => 123)).toThrow();
 });
 
-test.cb('websocket protocol', t => {
+test('websocket protocol', done => {
     const anyProtocol = 'foobar';
     const wss = new WebSocketServer({port: PORT});
-    const ws = new ReconnectingWebSocket(URL, anyProtocol, {
-        // minReconnectionDelay: 100,
-        // maxReconnectionDelay: 200,
-    });
+    const ws = new ReconnectingWebSocket(URL, anyProtocol);
 
     ws.addEventListener('open', () => {
-        t.is(ws.url, URL);
-        t.is(ws.protocol, anyProtocol);
+        expect(ws.url).toBe(URL);
+        expect(ws.protocol).toBe(anyProtocol);
         ws.close();
     });
 
     ws.addEventListener('close', () => {
         wss.close(() => {
-            setTimeout(() => {
-                t.end();
-            }, 500);
+            setTimeout(done, 500);
         });
     });
 });
 
-test.cb('undefined websocket protocol', t => {
+test('undefined websocket protocol', done => {
     const wss = new WebSocketServer({port: PORT});
     const ws = new ReconnectingWebSocket(URL, undefined, {});
 
     ws.addEventListener('open', () => {
-        t.is(ws.url, URL);
-        t.is(ws.protocol, '');
+        expect(ws.url).toBe(URL);
+        expect(ws.protocol).toBe('');
         ws.close();
     });
 
     ws.addEventListener('close', () => {
         wss.close(() => {
-            setTimeout(() => {
-                t.end();
-            }, 500);
+            setTimeout(done, 500);
         });
     });
 });
 
-test.cb('null websocket protocol', t => {
+test('null websocket protocol', done => {
     const wss = new WebSocketServer({port: PORT});
-    const ws = new ReconnectingWebSocket(URL, null, {});
 
+    // @ts-ignore - null is not allowed but could be passed in vanilla js
+    const ws = new ReconnectingWebSocket(URL, null, {});
     ws.addEventListener('open', () => {
-        t.is(ws.url, URL);
-        t.is(ws.protocol, '');
+        expect(ws.url).toBe(URL);
+        expect(ws.protocol).toBe('');
         ws.close();
     });
 
     ws.addEventListener('close', () => {
         wss.close(() => {
-            setTimeout(() => {
-                t.end();
-            }, 100);
+            setTimeout(done, 100);
         });
     });
 });
 
-test('connection status constants', t => {
-    const ws = new ReconnectingWebSocket(URL, null, {maxRetries: 0});
+test('connection status constants', () => {
+    const ws = new ReconnectingWebSocket(URL, undefined, {maxRetries: 0});
 
-    t.is(ReconnectingWebSocket.CONNECTING, 0);
-    t.is(ReconnectingWebSocket.OPEN, 1);
-    t.is(ReconnectingWebSocket.CLOSING, 2);
-    t.is(ReconnectingWebSocket.CLOSED, 3);
+    expect(ReconnectingWebSocket.CONNECTING).toBe(0);
+    expect(ReconnectingWebSocket.OPEN).toBe(1);
+    expect(ReconnectingWebSocket.CLOSING).toBe(2);
+    expect(ReconnectingWebSocket.CLOSED).toBe(3);
 
-    t.is(ws.CONNECTING, 0);
-    t.is(ws.OPEN, 1);
-    t.is(ws.CLOSING, 2);
-    t.is(ws.CLOSED, 3);
+    expect(ws.CONNECTING).toBe(0);
+    expect(ws.OPEN).toBe(1);
+    expect(ws.CLOSING).toBe(2);
+    expect(ws.CLOSED).toBe(3);
     ws.close();
 });
 
-const maxRetriesTest = (count, t) => {
-    const ws = new ReconnectingWebSocket(URL, null, {
+const maxRetriesTest = (count: number, done: () => void) => {
+    const ws = new ReconnectingWebSocket(URL, undefined, {
         maxRetries: count,
         maxReconnectionDelay: 200,
     });
-    t.plan(count + 1);
 
-    ws.addEventListener('error', event => {
-        t.pass();
+    ws.addEventListener('error', () => {
         if (ws.retryCount === count) {
-            setTimeout(() => t.end(), 500);
+            setTimeout(done, 500);
         }
         if (ws.retryCount > count) {
-            t.fail(`too many retries: ${ws.retryCount}`);
+            throw Error(`too many retries: ${ws.retryCount}`);
         }
     });
 };
 
-test.cb('max retries: 0', t => maxRetriesTest(0, t));
-test.cb('max retries: 1', t => maxRetriesTest(1, t));
-test.cb('max retries: 5', t => maxRetriesTest(5, t));
+test('max retries: 0', done => maxRetriesTest(0, done));
+test('max retries: 1', done => maxRetriesTest(1, done));
+test('max retries: 5', done => maxRetriesTest(5, done));
 
-test.cb('level0 event listeners are kept after reconnect', t => {
-    const ws = new ReconnectingWebSocket(URL, null, {
+test('level0 event listeners are kept after reconnect', done => {
+    const ws = new ReconnectingWebSocket(URL, undefined, {
         maxRetries: 4,
         reconnectionDelayGrowFactor: 1.2,
         maxReconnectionDelay: 20,
@@ -241,12 +225,12 @@ test.cb('level0 event listeners are kept after reconnect', t => {
     const handleClose = () => {};
     const handleMessage = () => {};
     const handleError = () => {
-        t.is(ws.onopen, handleOpen);
-        t.is(ws.onclose, handleClose);
-        t.is(ws.onmessage, handleMessage);
-        t.is(ws.onerror, handleError);
+        expect(ws.onopen).toBe(handleOpen);
+        expect(ws.onclose).toBe(handleClose);
+        expect(ws.onmessage).toBe(handleMessage);
+        expect(ws.onerror).toBe(handleError);
         if (ws.retryCount === 4) {
-            t.end();
+            done();
         }
     };
 
@@ -256,131 +240,141 @@ test.cb('level0 event listeners are kept after reconnect', t => {
     ws.onerror = handleError;
 });
 
-test.cb('level2 event listeners', t => {
+test('level2 event listeners', done => {
     const anyProtocol = 'foobar';
     const wss = new WebSocketServer({port: PORT});
     const ws = new ReconnectingWebSocket(URL, anyProtocol, {});
 
     ws.addEventListener('open', () => {
-        t.is(ws.protocol, anyProtocol);
-        t.is(ws.extensions, '');
-        t.is(ws.bufferedAmount, 0);
+        expect(ws.protocol).toBe(anyProtocol);
+        expect(ws.extensions).toBe('');
+        expect(ws.bufferedAmount).toBe(0);
         ws.close();
     });
 
     const fail = () => {
-        t.fail();
+        throw Error('fail');
     };
+    // @ts-ignore
     ws.addEventListener('unknown1', fail);
     ws.addEventListener('open', fail);
     ws.addEventListener('open', fail);
     ws.removeEventListener('open', fail);
+    // @ts-ignore
     ws.removeEventListener('unknown2', fail);
 
     ws.addEventListener('close', () => {
         wss.close(() => {
-            setTimeout(() => t.end(), 500);
+            setTimeout(() => done(), 500);
         });
     });
 });
 
 // https://developer.mozilla.org/en-US/docs/Web/API/EventListener/handleEvent
-test.cb('level2 event listeners using object with handleEvent', t => {
+test('level2 event listeners using object with handleEvent', done => {
     const anyProtocol = 'foobar';
     const wss = new WebSocketServer({port: PORT});
     const ws = new ReconnectingWebSocket(URL, anyProtocol, {});
 
     ws.addEventListener('open', {
+        // @ts-ignore
         handleEvent: () => {
-            t.is(ws.protocol, anyProtocol);
-            t.is(ws.extensions, '');
-            t.is(ws.bufferedAmount, 0);
+            expect(ws.protocol).toBe(anyProtocol);
+            expect(ws.extensions).toBe('');
+            expect(ws.bufferedAmount).toBe(0);
             ws.close();
         },
     });
 
     const fail = {
         handleEvent: () => {
-            t.fail();
+            throw Error('fail');
         },
     };
+    // @ts-ignore
     ws.addEventListener('unknown1', fail);
+    // @ts-ignore
     ws.addEventListener('open', fail);
+    // @ts-ignore
     ws.addEventListener('open', fail);
+    // @ts-ignore
     ws.removeEventListener('open', fail);
+    // @ts-ignore
     ws.removeEventListener('unknown2', fail);
 
+    // @ts-ignore
     ws.addEventListener('close', {
+        // @ts-ignore
         handleEvent: () => {
             wss.close();
-            setTimeout(() => t.end(), 500);
+            setTimeout(() => done(), 500);
         },
     });
 });
 
-test.cb('connection timeout', t => {
-    const proc = spawn('node', [`${__dirname}/unresponsive-server.js`, PORT_UNRESPONSIVE, 5000]);
-    t.plan(2);
+test('connection timeout', done => {
+    const proc = spawn('node', [`${__dirname}/unresponsive-server.js`, PORT_UNRESPONSIVE, '5000']);
 
     let lock = false;
-    proc.stdout.on('data', d => {
+    proc.stdout.on('data', () => {
         if (lock) return;
         lock = true;
 
-        const ws = new ReconnectingWebSocket(`ws://localhost:${PORT_UNRESPONSIVE}`, null, {
+        const ws = new ReconnectingWebSocket(`ws://localhost:${PORT_UNRESPONSIVE}`, undefined, {
             minReconnectionDelay: 50,
             connectionTimeout: 500,
             maxRetries: 1,
         });
 
         ws.addEventListener('error', event => {
-            t.is(event.message, 'TIMEOUT');
+            expect(event.message).toBe('TIMEOUT');
             if (ws.retryCount === 1) {
-                setTimeout(() => t.end(), 1000);
+                setTimeout(() => done(), 1000);
             }
         });
     });
 });
 
-test.cb('getters', t => {
+test('getters', done => {
     const anyProtocol = 'foobar';
     const wss = new WebSocketServer({port: PORT});
     const ws = new ReconnectingWebSocket(URL, anyProtocol, {maxReconnectionDelay: 100});
 
     ws.addEventListener('open', () => {
-        t.is(ws.protocol, anyProtocol);
-        t.is(ws.extensions, '');
-        t.is(ws.bufferedAmount, 0);
-        t.is(ws.binaryType, 'nodebuffer');
+        expect(ws.protocol).toBe(anyProtocol);
+        expect(ws.extensions).toBe('');
+        expect(ws.bufferedAmount).toBe(0);
+        expect(ws.binaryType).toBe('nodebuffer');
         ws.close();
     });
 
     ws.addEventListener('close', () => {
         wss.close();
-        setTimeout(() => t.end(), 500);
+        setTimeout(() => done(), 500);
     });
 });
 
-test.cb('binaryType', t => {
+test('binaryType', done => {
     const wss = new WebSocketServer({port: PORT});
     const ws = new ReconnectingWebSocket(URL, undefined, {minReconnectionDelay: 0});
 
-    t.is(ws.binaryType, 'blob');
+    expect(ws.binaryType).toBe('blob');
     ws.binaryType = 'arraybuffer';
     ws.addEventListener('open', () => {
-        t.is(ws.binaryType, 'arraybuffer', 'assigned after open');
+        expect(ws.binaryType).toBe('arraybuffer');
+        // @ts-ignore
         ws.binaryType = 'nodebuffer';
-        t.is(ws.binaryType, 'nodebuffer');
+        expect(ws.binaryType).toBe('nodebuffer');
         ws.close();
     });
 
     ws.addEventListener('close', () => {
         wss.close();
-        setTimeout(() => t.end(), 500);
+        setTimeout(() => done(), 500);
     });
 });
 
-test.cb('calling to close multiple times', t => {
+test('calling to close multiple times', done => {
     const wss = new WebSocketServer({port: PORT});
     const ws = new ReconnectingWebSocket(URL, undefined, {});
 
@@ -392,11 +386,11 @@ test.cb('calling to close multiple times', t => {
 
     ws.addEventListener('close', () => {
         wss.close();
-        setTimeout(() => t.end(), 500);
+        setTimeout(() => done(), 500);
     });
 });
 
-test.cb('calling to reconnect when not ready', t => {
+test('calling to reconnect when not ready', done => {
     const wss = new WebSocketServer({port: PORT});
     const ws = new ReconnectingWebSocket(URL, undefined, {});
     ws.reconnect();
@@ -408,25 +402,25 @@ test.cb('calling to reconnect when not ready', t => {
 
     ws.addEventListener('close', () => {
         wss.close();
-        setTimeout(() => t.end(), 500);
+        setTimeout(() => done(), 500);
     });
 });
 
-test.cb('start closed', t => {
+test('start closed', done => {
     const anyMessageText = 'hello';
     const anyProtocol = 'foobar';
 
     const wss = new WebSocketServer({port: PORT});
-    wss.on('connection', ws => {
-        ws.on('message', msg => {
+    wss.on('connection', (ws: WebSocket) => {
+        ws.on('message', (msg: WebSocket.Data) => {
             ws.send(msg);
         });
     });
     wss.on('error', () => {
-        t.fail();
+        throw Error('error');
     });
 
-    t.plan(8);
+    expect.assertions(8);
 
     const ws = new ReconnectingWebSocket(URL, anyProtocol, {
         minReconnectionDelay: 100,
@@ -434,83 +428,83 @@ test.cb('start closed', t => {
         startClosed: true,
     });
 
-    t.is(ws.readyState, ws.CLOSED);
+    expect(ws.readyState).toBe(ws.CLOSED);
 
     setTimeout(() => {
-        t.is(ws.readyState, ws.CLOSED);
+        expect(ws.readyState).toBe(ws.CLOSED);
 
         ws.reconnect();
 
         ws.addEventListener('open', () => {
-            t.is(ws.protocol, anyProtocol);
-            t.is(ws.readyState, ws.OPEN);
+            expect(ws.protocol).toBe(anyProtocol);
+            expect(ws.readyState).toBe(ws.OPEN);
             ws.send(anyMessageText);
         });
 
         ws.addEventListener('message', msg => {
-            t.is(msg.data, anyMessageText);
+            expect(msg.data).toBe(anyMessageText);
             ws.close(1000, '');
-            t.is(ws.readyState, ws.CLOSING);
+            expect(ws.readyState).toBe(ws.CLOSING);
         });
 
         ws.addEventListener('close', () => {
-            t.is(ws.readyState, ws.CLOSED);
-            t.is(ws.url, URL);
+            expect(ws.readyState).toBe(ws.CLOSED);
+            expect(ws.url).toBe(URL);
             wss.close();
-            setTimeout(() => t.end(), 1000);
+            setTimeout(() => done(), 1000);
         });
     }, 300);
 });
 
-test.cb('connect, send, receive, close', t => {
+test('connect, send, receive, close', done => {
     const anyMessageText = 'hello';
     const anyProtocol = 'foobar';
 
     const wss = new WebSocketServer({port: PORT});
-    wss.on('connection', ws => {
-        ws.on('message', msg => {
+    wss.on('connection', (ws: WebSocket) => {
+        ws.on('message', (msg: WebSocket.Data) => {
             ws.send(msg);
         });
     });
     wss.on('error', () => {
-        t.fail();
+        throw Error('error');
     });
 
-    t.plan(7);
+    expect.assertions(7);
 
     const ws = new ReconnectingWebSocket(URL, anyProtocol, {
         minReconnectionDelay: 100,
         maxReconnectionDelay: 200,
     });
-    t.is(ws.readyState, ws.CONNECTING);
+    expect(ws.readyState).toBe(ws.CONNECTING);
 
     ws.addEventListener('open', () => {
-        t.is(ws.protocol, anyProtocol);
-        t.is(ws.readyState, ws.OPEN);
+        expect(ws.protocol).toBe(anyProtocol);
+        expect(ws.readyState).toBe(ws.OPEN);
         ws.send(anyMessageText);
     });
 
     ws.addEventListener('message', msg => {
-        t.is(msg.data, anyMessageText);
+        expect(msg.data).toBe(anyMessageText);
         ws.close(1000, '');
-        t.is(ws.readyState, ws.CLOSING);
+        expect(ws.readyState).toBe(ws.CLOSING);
     });
 
     ws.addEventListener('close', () => {
-        t.is(ws.readyState, ws.CLOSED);
-        t.is(ws.url, URL);
+        expect(ws.readyState).toBe(ws.CLOSED);
+        expect(ws.url).toBe(URL);
         wss.close();
-        setTimeout(() => t.end(), 1000);
+        setTimeout(() => done(), 1000);
     });
 });
 
-test.cb('connect, send, receive, reconnect', t => {
+test('connect, send, receive, reconnect', done => {
     const anyMessageText = 'hello';
     const anyProtocol = 'foobar';
 
     const wss = new WebSocketServer({port: PORT});
-    wss.on('connection', ws => {
-        ws.on('message', msg => {
+    wss.on('connection', (ws: WebSocket) => {
+        ws.on('message', (msg: WebSocket.Data) => {
             ws.send(msg);
         });
     });
@@ -521,7 +515,7 @@ test.cb('connect, send, receive, reconnect', t => {
     // 6 = 3 * 2 open
     // 8 = 2 * 3 message + 2 reconnect
     // 7 = 2 * 3 close + 1 closed
-    t.plan(21);
+    expect.assertions(21);
 
     const ws = new ReconnectingWebSocket(URL, anyProtocol, {
         minReconnectionDelay: 100,
@@ -530,55 +524,55 @@ test.cb('connect, send, receive, reconnect', t => {
 
     ws.onopen = () => {
         currentRound++;
-        t.is(ws.protocol, anyProtocol);
-        t.is(ws.readyState, ws.OPEN);
+        expect(ws.protocol).toBe(anyProtocol);
+        expect(ws.readyState).toBe(ws.OPEN);
         ws.send(anyMessageText);
     };
 
     ws.onmessage = msg => {
-        t.is(msg.data, anyMessageText);
+        expect(msg.data).toBe(anyMessageText);
         if (currentRound < totalRounds) {
             ws.reconnect(1000, 'reconnect');
-            t.is(ws.retryCount, 0);
+            expect(ws.retryCount).toBe(0);
         } else {
             ws.close(1000, 'close');
         }
-        t.is(ws.readyState, ws.CLOSING);
+        expect(ws.readyState).toBe(ws.CLOSING);
     };
 
     ws.addEventListener('close', event => {
-        t.is(ws.url, URL);
+        expect(ws.url).toBe(URL);
         if (currentRound >= totalRounds) {
-            t.is(ws.readyState, ws.CLOSED);
+            expect(ws.readyState).toBe(ws.CLOSED);
             wss.close();
-            setTimeout(() => t.end(), 1000);
-            t.is(event.reason, 'close');
+            setTimeout(() => done(), 1000);
+            expect(event.reason).toBe('close');
         } else {
-            t.is(event.reason, 'reconnect');
+            expect(event.reason).toBe('reconnect');
         }
     });
 });
 
-test.cb('immediately-failed connection should not timeout', t => {
-    const ws = new ReconnectingWebSocket('ws://255.255.255.255', null, {
+test('immediately-failed connection should not timeout', done => {
+    const ws = new ReconnectingWebSocket('ws://255.255.255.255', undefined, {
         maxRetries: 2,
         connectionTimeout: 500,
     });
 
-    ws.addEventListener('error', err => {
+    ws.addEventListener('error', (err: ErrorEvent) => {
         if (err.message === 'TIMEOUT') {
-            t.fail();
+            throw Error('error');
         }
         if (ws.retryCount === 2) {
-            setTimeout(() => t.end(), 500);
+            setTimeout(() => done(), 500);
         }
         if (ws.retryCount > 2) {
-            t.fail();
+            throw Error('error');
         }
     });
 });
 
-test.cb('immediately-failed connection with 0 maxRetries must not retry', t => {
+test('immediately-failed connection with 0 maxRetries must not retry', done => {
     const ws = new ReconnectingWebSocket('ws://255.255.255.255', [], {
         maxRetries: 0,
         connectionTimeout: 2000,
@@ -590,18 +584,18 @@ test.cb('immediately-failed connection with 0 maxRetries must not retry', t => {
     ws.addEventListener('error', err => {
         i++;
         if (err.message === 'TIMEOUT') {
-            t.fail();
+            throw Error('error');
         }
         if (i > 1) {
-            t.fail();
+            throw Error('error');
         }
         setTimeout(() => {
-            t.end();
+            done();
         }, 2100);
     });
 });
 
-test.cb('connect and close before establishing connection', t => {
+test('connect and close before establishing connection', done => {
     const wss = new WebSocketServer({port: PORT});
     const ws = new ReconnectingWebSocket(URL, undefined, {
         minReconnectionDelay: 100,
@@ -611,25 +605,25 @@ test.cb('connect and close before establishing connection', t => {
     ws.close(); // closing before establishing connection
 
     ws.addEventListener('open', () => {
-        t.fail('open never called');
+        throw Error('open called');
     });
 
     let closeCount = 0;
     ws.addEventListener('close', () => {
         closeCount++;
         if (closeCount > 1) {
-            t.fail('close should be called once');
+            throw Error('close should be called once');
         }
     });
 
     setTimeout(() => {
         // wait a little to be sure no unexpected open or close events happen
         wss.close();
-        t.end();
+        done();
     }, 1000);
 });
 
-test.cb('enqueue messages', t => {
+test('enqueue messages', done => {
     const ws = new ReconnectingWebSocket(URL, undefined, {
         maxRetries: 0,
     });
@@ -638,13 +632,12 @@ test.cb('enqueue messages', t => {
     for (let i = 0; i < count; i++) ws.send(message);
 
     ws.onerror = () => {
-        t.is(ws.bufferedAmount, message.length * count);
-        t.pass();
-        t.end();
+        expect(ws.bufferedAmount).toBe(message.length * count);
+        done();
     };
 });
 
-test.cb('respect maximum enqueued messages', t => {
+test('respect maximum enqueued messages', done => {
     const queueSize = 2;
     const ws = new ReconnectingWebSocket(URL, undefined, {
         maxRetries: 0,
@@ -655,31 +648,31 @@ test.cb('respect maximum enqueued messages', t => {
     for (let i = 0; i < count; i++) ws.send(message);
 
     ws.onerror = () => {
-        t.is(ws.bufferedAmount, message.length * queueSize);
-        t.pass();
-        t.end();
+        expect(ws.bufferedAmount).toBe(message.length * queueSize);
+        done();
     };
 });
 
-test.cb('enqueue messages before websocket initialization with expected order', t => {
+test('enqueue messages before websocket initialization with expected order', done => {
     const wss = new WebSocketServer({port: PORT});
     const ws = new ReconnectingWebSocket(URL);
 
     const messages = ['message1', 'message2', 'message3'];
 
     messages.forEach(m => ws.send(m));
-    t.is(ws._messageQueue.length, messages.length);
+    // @ts-ignore - accessing private field
+    expect(ws._messageQueue.length).toBe(messages.length);
 
-    t.is(ws.bufferedAmount, messages.reduce((a, m) => a + m.length, 0));
+    expect(ws.bufferedAmount).toBe(messages.reduce((a, m) => a + m.length, 0));
 
     let i = 0;
-    wss.on('connection', client => {
-        client.on('message', data => {
+    wss.on('connection', (client: WebSocket) => {
+        client.on('message', (data: WebSocket.Data) => {
             if (data === 'ok') {
-                t.is(i, messages.length, 'enqueued messages are sent first');
+                expect(i).toBe(messages.length);
                 ws.close();
             } else {
-                t.is(data, messages[i]);
+                expect(data).toBe(messages[i]);
                 i++;
             }
         });
@@ -691,12 +684,12 @@ test.cb('enqueue messages before websocket initialization with expected order', 
 
     ws.addEventListener('close', () => {
         wss.close(() => {
-            t.end();
+            done();
         });
     });
 });
 
-test.cb('closing from the other side should reconnect', t => {
+test('closing from the other side should reconnect', done => {
     const wss = new WebSocketServer({port: PORT});
     const ws = new ReconnectingWebSocket(URL, undefined, {
         minReconnectionDelay: 100,
@@ -705,17 +698,17 @@ test.cb('closing from the other side should reconnect', t => {
 
     let max = 3;
     let i = 0;
-    wss.on('connection', client => {
+    wss.on('connection', (client: WebSocket) => {
         i++;
         if (i < max) {
-            t.pass('closing client from server side should trigger a reconnection');
+            // closing client from server side should trigger a reconnection
             setTimeout(() => client.close(), 100);
         }
         if (i === max) {
             // will close from client side
         }
         if (i > max) {
-            t.fail('unexpected connection');
+            throw Error('unexpected connection');
         }
     });
 
@@ -727,17 +720,17 @@ test.cb('closing from the other side should reconnect', t => {
             // wait a little to ensure no new connections are opened
             setTimeout(() => {
                 wss.close(() => {
-                    t.end();
+                    done();
                 });
             }, 500);
         }
         if (j > max) {
-            t.fail('unexpected open');
+            throw Error('unexpected open');
         }
     });
 });
 
-test.cb('closing from the other side should allow to keep closed', t => {
+test('closing from the other side should allow to keep closed', done => {
     const wss = new WebSocketServer({port: PORT});
     const ws = new ReconnectingWebSocket(URL, undefined, {
         minReconnectionDelay: 100,
@@ -747,15 +740,14 @@ test.cb('closing from the other side should allow to keep closed', t => {
     const codes = [4000, 4001];
 
     let i = 0;
-    wss.on('connection', client => {
+    wss.on('connection', (client: WebSocket) => {
         if (i > codes.length) {
-            t.fail();
+            throw Error('error');
         }
         client.close(codes[i], String(codes[i]));
         i++;
     });
 
-    let j = 0;
     ws.addEventListener('close', e => {
         if (e.code === codes[0]) {
             // do nothing, will reconnect
@@ -764,34 +756,36 @@ test.cb('closing from the other side should allow to keep closed', t => {
             // close connection (and keep closed)
             ws.close();
             setTimeout(() => {
-                wss.close(() => t.end());
+                wss.close(() => done());
             }, 1000);
         }
     });
 });
 
-test.cb('reconnection delay grow factor', t => {
+test('reconnection delay grow factor', done => {
     const ws = new ReconnectingWebSocket('wss://255.255.255.255', [], {
         minReconnectionDelay: 100,
         maxReconnectionDelay: 1000,
         reconnectionDelayGrowFactor: 2,
     });
-    t.is(ws._getNextDelay(), 0);
+    // @ts-ignore - accessing private field
+    expect(ws._getNextDelay()).toBe(0);
     const expected = [100, 200, 400, 800, 1000, 1000];
     let retry = 0;
-    ws.addEventListener('error', e => {
-        t.is(ws._getNextDelay(), expected[retry]);
+    ws.addEventListener('error', () => {
+        // @ts-ignore - accessing private field
+        expect(ws._getNextDelay()).toBe(expected[retry]);
         retry++;
         if (retry >= expected.length) {
             ws.close();
             setTimeout(() => {
-                t.end();
+                done();
             }, 2000);
         }
     });
 });
 
-test.cb('minUptime', t => {
+test('minUptime', done => {
     const wss = new WebSocketServer({port: PORT});
     const ws = new ReconnectingWebSocket(URL, [], {
         minReconnectionDelay: 100,
@@ -802,7 +796,7 @@ test.cb('minUptime', t => {
     const expectedDelays = [100, 200, 400, 800, 100, 100];
     const expectedRetryCount = [1, 2, 3, 4, 1, 1];
     let connectionCount = 0;
-    wss.on('connection', client => {
+    wss.on('connection', (client: WebSocket) => {
         connectionCount++;
         if (connectionCount <= expectedDelays.length) {
             setTimeout(() => {
@@ -811,13 +805,13 @@ test.cb('minUptime', t => {
         }
     });
     let openCount = 0;
-    ws.addEventListener('open', e => {
+    ws.addEventListener('open', () => {
         openCount++;
         if (openCount > expectedDelays.length) {
             ws.close();
             wss.close(() => {
                 setTimeout(() => {
-                    t.end();
+                    done();
                 }, 1000);
             });
         }
@@ -825,14 +819,16 @@ test.cb('minUptime', t => {
     let closeCount = 0;
     ws.addEventListener('close', () => {
         if (closeCount < expectedDelays.length) {
-            t.is(ws._getNextDelay(), expectedDelays[closeCount]);
-            t.is(ws._retryCount, expectedRetryCount[closeCount]);
+            // @ts-ignore - accessing private field
+            expect(ws._getNextDelay()).toBe(expectedDelays[closeCount]);
+            // @ts-ignore - accessing private field
+            expect(ws._retryCount).toBe(expectedRetryCount[closeCount]);
             closeCount++;
         }
     });
 });
 
-test.cb('reconnect after closing', t => {
+test('reconnect after closing', done => {
     const wss = new WebSocketServer({port: PORT});
     const ws = new ReconnectingWebSocket(URL, undefined, {
         minReconnectionDelay: 100,
@@ -849,7 +845,7 @@ test.cb('reconnect after closing', t => {
             ws.close();
         }
         if (i > 2) {
-            t.fail('no more reconnections expected');
+            throw Error('no more expected reconnections');
         }
     });
 
@@ -861,24 +857,12 @@ test.cb('reconnect after closing', t => {
         if (i === 2) {
             wss.close(() => {
                 setTimeout(() => {
-                    t.end();
+                    done();
                 }, 1000);
             });
         }
         if (i > 2) {
-            t.fail('no more reconnections expected');
+            throw Error('no more expected reconnections');
         }
     });
 });
-
-// test.cb('reconnect after closing', t => {
-//     const wss = new WebSocketServer({port: PORT});
-//     const ws = new ReconnectingWebSocket(URL, undefined, {
-//         minReconnectionDelay: 100,
-//         maxReconnectionDelay: 200,
-//     });
-
-//     ws.addEventListener('open', () => {});
-
-//     ws.addEventListener('close', () => {});
-// });
