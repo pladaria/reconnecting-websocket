@@ -178,6 +178,45 @@ test('null websocket protocol', done => {
     });
 });
 
+test('websocket invalid protocolsProvider', () => {
+    const ws = new ReconnectingWebSocket('ws://example.com', 'foo', {});
+
+    // @ts-ignore - accessing private property
+    expect(() => ws._getNextProtocols(() => /Hahaha/)).toThrow();
+});
+
+test('websocket sync protocolsProvider', done => {
+    const anyProtocol = 'bar';
+    const wss = new WebSocketServer({port: PORT});
+
+    const ws = new ReconnectingWebSocket(URL, () => anyProtocol, {});
+    ws.addEventListener('open', () => {
+        expect(ws.url).toBe(URL);
+        expect(ws.protocol).toBe(anyProtocol);
+        ws.close();
+    });
+
+    ws.addEventListener('close', () => {
+        wss.close(() => setTimeout(done, 100));
+    });
+});
+
+test('websocket async protocolsProvider', done => {
+    const anyProtocol = 'foo';
+    const wss = new WebSocketServer({port: PORT});
+
+    const ws = new ReconnectingWebSocket(URL, async () => anyProtocol, {});
+    ws.addEventListener('open', () => {
+        expect(ws.url).toBe(URL);
+        expect(ws.protocol).toBe(anyProtocol);
+        ws.close();
+    });
+
+    ws.addEventListener('close', () => {
+        wss.close(() => setTimeout(done, 100));
+    });
+});
+
 test('connection status constants', () => {
     const ws = new ReconnectingWebSocket(URL, undefined, {maxRetries: 0});
 

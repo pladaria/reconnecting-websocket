@@ -77,6 +77,33 @@ const urlProvider = async () => {
 const rws = new ReconnectingWebSocket(urlProvider);
 ```
 
+### Update Protocols
+
+The `protocols` parameter will be resolved before connecting, possible types:
+
+-   `null`
+-   `string`
+-   `string[]`
+-   `() => string | string[] | null`
+-   `() => Promise<string | string[] | null>`
+
+```javascript
+import ReconnectingWebSocket from 'reconnecting-websocket`;
+const rws = new ReconnectingWebSocket('ws://your.site.com', 'your protocol');
+```
+
+```javascript
+import ReconnectingWebSocket from 'reconnecting-websocket`;
+
+const protocols = ['p1', 'p2', ['p3.1', 'p3.2']];
+let protocolsIndex = 0;
+
+// round robin protocols provider
+const protocolsProvider = () => protocols[protocolsIndex++ % protocols.length];
+
+const rws = new ReconnectingWebSocket('ws://your.site.com', protocolsProvider);
+```
+
 ### Options
 
 #### Sample with custom options
@@ -130,7 +157,7 @@ debug: false,
 ### Methods
 
 ```typescript
-constructor(url: UrlProvider, protocols?: string | string[], options?: Options)
+constructor(url: UrlProvider, protocols?: ProtocolsProvider, options?: Options)
 
 close(code?: number, reason?: string)
 reconnect(code?: number, reason?: string)
