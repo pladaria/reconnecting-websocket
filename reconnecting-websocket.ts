@@ -249,11 +249,11 @@ export default class ReconnectingWebSocket {
     /**
      * Enqueue specified data to be transmitted to the server over the WebSocket connection
      */
-    public send(data: Message) {
+    public send(data: Message, bufferOnFailure = true) {
         if (this._ws && this._ws.readyState === this.OPEN) {
             this._debug('send', data);
             this._ws.send(data);
-        } else {
+        } else if (bufferOnFailure) {
             const {maxEnqueuedMessages = DEFAULT.maxEnqueuedMessages} = this._options;
             if (this._messageQueue.length < maxEnqueuedMessages) {
                 this._debug('enqueue', data);
