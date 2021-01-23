@@ -49,7 +49,6 @@ test('global WebSocket is used if available', done => {
     // @ts-ignore
     const ws = new ReconnectingWebSocket(URL, undefined, {maxRetries: 0});
     ws.onerror = () => {
-        // @ts-ignore
         expect(ws._ws instanceof WebSocket).toBe(true);
         done();
     };
