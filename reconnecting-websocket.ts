@@ -60,7 +60,7 @@ export type ListenersMap = {
 };
 
 export default class ReconnectingWebSocket {
-    private _ws?: WebSocket;
+    _ws?: WebSocket;
     private _listeners: ListenersMap = {
         error: [],
         message: [],
