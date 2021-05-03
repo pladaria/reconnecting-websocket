@@ -106,6 +106,7 @@ type Options = {
     maxRetries?: number; // maximum number of retries
     maxEnqueuedMessages?: number; // maximum number of messages to buffer until reconnection
     startClosed?: boolean; // start websocket in CLOSED state, call `.reconnect()` to connect
+    retryURL: boolean; // retry URL provider request if it fails (it follows the same logic as WebSocket retries)
     debug?: boolean; // enables debug output
 };
 ```
@@ -122,6 +123,7 @@ connectionTimeout: 4000,
 maxRetries: Infinity,
 maxEnqueuedMessages: Infinity,
 startClosed: false,
+retryURL: false,
 debug: false,
 ```
 
