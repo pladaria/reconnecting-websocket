@@ -595,6 +595,24 @@ test('immediately-failed connection with 0 maxRetries must not retry', done => {
     });
 });
 
+test('failing URL provider is retried if retryURL is true', done => {
+    const ws = new ReconnectingWebSocket(() => Promise.reject(new Error('TEST_ERROR')), undefined, {
+        maxRetries: 2,
+        minReconnectionDelay: 100,
+        maxReconnectionDelay: 200,
+        retryURL: true,
+    });
+
+    ws.addEventListener('error', (err: ErrorEvent) => {
+        if (err.message !== 'TEST_ERROR') {
+            throw Error('error');
+        }
+        if (ws.retryCount === 2) {
+            done();
+        }
+    });
+});
+
 test('connect and close before establishing connection', done => {
     const wss = new WebSocketServer({port: PORT});
     const ws = new ReconnectingWebSocket(URL, undefined, {

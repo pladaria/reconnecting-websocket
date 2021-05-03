@@ -33,6 +33,7 @@ export type Options = {
     maxRetries?: number;
     maxEnqueuedMessages?: number;
     startClosed?: boolean;
+    retryURL?: boolean;
     debug?: boolean;
 };
 
@@ -45,6 +46,7 @@ const DEFAULT = {
     maxRetries: Infinity,
     maxEnqueuedMessages: Infinity,
     startClosed: false,
+    retryURL: false,
     debug: false,
 };
 
@@ -357,6 +359,7 @@ export default class ReconnectingWebSocket {
             maxRetries = DEFAULT.maxRetries,
             connectionTimeout = DEFAULT.connectionTimeout,
             WebSocket = getGlobalWebSocket(),
+            retryURL = DEFAULT.retryURL,
         } = this._options;
 
         if (this._retryCount >= maxRetries) {
@@ -373,21 +376,34 @@ export default class ReconnectingWebSocket {
         }
         this._wait()
             .then(() => this._getNextUrl(this._url))
-            .then(url => {
-                // close could be called before creating the ws
-                if (this._closeCalled) {
-                    return;
-                }
-                this._debug('connect', {url, protocols: this._protocols});
-                this._ws = this._protocols
-                    ? new WebSocket(url, this._protocols)
-                    : new WebSocket(url);
-                this._ws!.binaryType = this._binaryType;
-                this._connectLock = false;
-                this._addListeners();
+            .then(
+                url => {
+                    // close could be called before creating the ws
+                    if (this._closeCalled) {
+                        return;
+                    }
+                    this._debug('connect', {url, protocols: this._protocols});
+                    this._ws = this._protocols
+                        ? new WebSocket(url, this._protocols)
+                        : new WebSocket(url);
+                    this._ws!.binaryType = this._binaryType;
+                    this._connectLock = false;
+                    this._addListeners();
 
-                this._connectTimeout = setTimeout(() => this._handleTimeout(), connectionTimeout);
-            });
+                    this._connectTimeout = setTimeout(
+                        () => this._handleTimeout(),
+                        connectionTimeout,
+                    );
+                },
+                (error: Error) => {
+                    if (retryURL) {
+                        this._connectLock = false;
+                        this._handleError(new Events.ErrorEvent(error, this));
+                    } else {
+                        throw error;
+                    }
+                },
+            );
     }
 
     private _handleTimeout() {
