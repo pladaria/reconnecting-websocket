@@ -1,7 +1,7 @@
-# Reconnecting WebSocket
+# Slite's fork of Reconnecting WebSocket
 
-[![Build Status](https://travis-ci.org/pladaria/reconnecting-websocket.svg?branch=master&v=1)](https://travis-ci.org/pladaria/reconnecting-websocket)
-[![Coverage Status](https://coveralls.io/repos/github/pladaria/reconnecting-websocket/badge.svg?branch=master&v=3)](https://coveralls.io/github/pladaria/reconnecting-websocket?branch=master)
+This is the same as https://github.com/pladaria/reconnecting-websocket but with
+https://github.com/pladaria/reconnecting-websocket/pull/156
 
 WebSocket that will automatically reconnect if the connection is closed.
 
