@@ -1,7 +1,7 @@
 {
-    "name": "reconnecting-websocket",
-    "version": "4.4.0",
-    "description": "Reconnecting WebSocket",
+    "name": "@slite/reconnecting-websocket",
+    "version": "4.4.1",
+    "description": "Slite's Reconnecting WebSocket",
     "main": "./dist/reconnecting-websocket-cjs.js",
     "module": "./dist/reconnecting-websocket-mjs.js",
     "types": "./dist/reconnecting-websocket.d.ts",
@@ -58,15 +58,15 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/pladaria/reconnecting-websocket.git"
+        "url": "git+https://github.com/sliteteam/reconnecting-websocket.git"
     },
     "bugs": {
-        "url": "https://github.com/pladaria/reconnecting-websocket/issues"
+        "url": "https://github.com/sliteteam/reconnecting-websocket/issues"
     },
     "publishConfig": {
         "registry": "https://registry.npmjs.org"
     },
-    "homepage": "https://github.com/pladaria/reconnecting-websocket#readme",
+    "homepage": "https://github.com/sliteteam/reconnecting-websocket#readme",
     "lint-staged": {
         "linters": {
             "*.{js,md,ts}": [

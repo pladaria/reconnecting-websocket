@@ -1,7 +1,7 @@
-# Reconnecting WebSocket
+# Slite's fork of Reconnecting WebSocket
 
-[![Build Status](https://travis-ci.org/pladaria/reconnecting-websocket.svg?branch=master&v=1)](https://travis-ci.org/pladaria/reconnecting-websocket)
-[![Coverage Status](https://coveralls.io/repos/github/pladaria/reconnecting-websocket/badge.svg?branch=master&v=3)](https://coveralls.io/github/pladaria/reconnecting-websocket?branch=master)
+This is the same as https://github.com/pladaria/reconnecting-websocket but with
+https://github.com/pladaria/reconnecting-websocket/pull/156
 
 WebSocket that will automatically reconnect if the connection is closed.
 
@@ -106,6 +106,7 @@ type Options = {
     maxRetries?: number; // maximum number of retries
     maxEnqueuedMessages?: number; // maximum number of messages to buffer until reconnection
     startClosed?: boolean; // start websocket in CLOSED state, call `.reconnect()` to connect
+    retryURL: boolean; // retry URL provider request if it fails (it follows the same logic as WebSocket retries)
     debug?: boolean; // enables debug output
 };
 ```
@@ -122,6 +123,7 @@ connectionTimeout: 4000,
 maxRetries: Infinity,
 maxEnqueuedMessages: Infinity,
 startClosed: false,
+retryURL: false,
 debug: false,
 ```
 
