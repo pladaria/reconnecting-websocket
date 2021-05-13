@@ -6,6 +6,7 @@
  */
 
 import * as Events from './events';
+import HttpsProxyAgent from 'https-proxy-agent';
 
 const getGlobalWebSocket = (): WebSocket | undefined => {
     if (typeof WebSocket !== 'undefined') {
@@ -34,6 +35,7 @@ export type Options = {
     maxEnqueuedMessages?: number;
     startClosed?: boolean;
     debug?: boolean;
+    httpsProxy?: string;
 };
 
 const DEFAULT = {
@@ -357,6 +359,7 @@ export default class ReconnectingWebSocket {
             maxRetries = DEFAULT.maxRetries,
             connectionTimeout = DEFAULT.connectionTimeout,
             WebSocket = getGlobalWebSocket(),
+            httpsProxy = '',
         } = this._options;
 
         if (this._retryCount >= maxRetries) {
@@ -379,9 +382,14 @@ export default class ReconnectingWebSocket {
                     return;
                 }
                 this._debug('connect', {url, protocols: this._protocols});
+                let proxyOpt = {};
+                if (httpsProxy) {
+                    // @ts-ignore
+                    proxyOpt.agent = new HttpsProxyAgent(httpsProxy);
+                }
                 this._ws = this._protocols
-                    ? new WebSocket(url, this._protocols)
-                    : new WebSocket(url);
+                    ? new WebSocket(url, this._protocols, proxyOpt)
+                    : new WebSocket(url, proxyOpt);
                 this._ws!.binaryType = this._binaryType;
                 this._connectLock = false;
                 this._addListeners();
