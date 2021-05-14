@@ -52,9 +52,7 @@
         "uglify-es": "^3.3.10",
         "ws": "^6.2.1"
     },
-    "dependencies": {
-        "https-proxy-agent": "^5.0.0"
-    },
+    "dependencies": {},
     "directories": {
         "test": "test"
     },
