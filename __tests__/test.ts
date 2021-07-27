@@ -178,6 +178,45 @@ test('null websocket protocol', done => {
     });
 });
 
+test('websocket protocols provider', async () => {
+    const anyProtocol = 'foobar';
+    const ws = new ReconnectingWebSocket(URL, undefined, {maxRetries: 0});
+
+    // @ts-ignore - accessing private property
+    expect(await ws._getNextProtocols(null)).toBe(null);
+
+    // @ts-ignore - accessing private property
+    expect(await ws._getNextProtocols(undefined)).toBe(undefined);
+
+    // @ts-ignore - accessing private property
+    expect(await ws._getNextProtocols(anyProtocol)).toStrictEqual([anyProtocol]);
+
+    // @ts-ignore - accessing private property
+    expect(await ws._getNextProtocols([anyProtocol])).toStrictEqual([anyProtocol]);
+
+    // @ts-ignore - accessing private property
+    expect(await ws._getNextProtocols(() => anyProtocol)).toStrictEqual([anyProtocol]);
+
+    // @ts-ignore - accessing private property
+    expect(await ws._getNextProtocols(() => [anyProtocol])).toStrictEqual([anyProtocol]);
+
+    // @ts-ignore - accessing private property
+    expect(await ws._getNextProtocols(() => Promise.resolve(anyProtocol))).toStrictEqual([
+        anyProtocol,
+    ]);
+
+    // @ts-ignore - accessing private property
+    expect(await ws._getNextProtocols(() => Promise.resolve([anyProtocol]))).toStrictEqual([
+        anyProtocol,
+    ]);
+
+    // @ts-ignore - accessing private property
+    expect(() => ws._getNextProtocols(123)).toThrow();
+
+    // @ts-ignore - accessing private property
+    expect(() => ws._getNextProtocols(() => 123)).toThrow();
+});
+
 test('connection status constants', () => {
     const ws = new ReconnectingWebSocket(URL, undefined, {maxRetries: 0});
 
