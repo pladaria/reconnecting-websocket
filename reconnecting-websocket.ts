@@ -420,7 +420,7 @@ export default class ReconnectingWebSocket {
             throw Error('No valid WebSocket class provided');
         }
 
-        let connectionInfo: ConnectionInfo = {};
+        const connectionInfo: ConnectionInfo = {};
 
         this._wait()
             .then(() => this._getNextUrl(this._url))
@@ -436,7 +436,7 @@ export default class ReconnectingWebSocket {
                 if (this._closeCalled) {
                     return;
                 }
-                let {url, protocols} = connectionInfo;
+                const {url, protocols} = connectionInfo;
                 this._debug('connect', {url, protocols});
                 this._ws = protocols ? new WebSocket(url, protocols) : new WebSocket(url);
                 this._ws!.binaryType = this._binaryType;
