@@ -19,6 +19,8 @@ jobs:
       with:
         node-version: '14'
     - run: npm install
+    - run: npm install --global rollup
+    - run: npm install --global uglify-js
     - run: npm run clean && rollup -c && uglifyjs --compress --mangle -o dist/reconnecting-websocket-iife.min.js dist/reconnecting-websocket-iife.js
     - uses: stefanzweifel/git-auto-commit-action@v4
       with:
