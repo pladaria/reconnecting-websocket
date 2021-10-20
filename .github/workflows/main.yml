@@ -28,4 +28,3 @@ jobs:
       with:
         commit_message: "Github Action: Build"
         branch: ${{ github.ref }}
-        file_pattern: dist/*.js dist/*.ts
