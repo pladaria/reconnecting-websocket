@@ -21,6 +21,7 @@ jobs:
     - run: npm install
     - run: npm install --global rollup
     - run: npm install --global uglify-js
+    - run: sed '/dist/d' ./.gitignore | tee .gitignore
     - run: npm run build
     - name: Auto committing minified files
       uses: stefanzweifel/git-auto-commit-action@v4
