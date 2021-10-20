@@ -590,4 +590,4 @@ var ReconnectingWebSocket = (function () {
 
     return ReconnectingWebSocket;
 
-})();
+}());

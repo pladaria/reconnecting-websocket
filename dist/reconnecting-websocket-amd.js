@@ -1,4 +1,4 @@
-define((function () { 'use strict';
+define(function () { 'use strict';
 
     /*! *****************************************************************************
     Copyright (c) Microsoft Corporation. All rights reserved.
@@ -589,4 +589,4 @@ define((function () { 'use strict';
 
     return ReconnectingWebSocket;
 
-}));
+});

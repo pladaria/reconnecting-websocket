@@ -585,4 +585,4 @@ var ReconnectingWebSocket = /** @class */ (function () {
     return ReconnectingWebSocket;
 }());
 
-export { ReconnectingWebSocket as default };
+export default ReconnectingWebSocket;
