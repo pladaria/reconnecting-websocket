@@ -19,4 +19,8 @@ jobs:
       with:
         node-version: '14'
     - run: npm install
-    - run: npm build
+    - run: npm run-script build
+    - uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "Github Action: Build"
+        branch: ${{ github.ref }}
