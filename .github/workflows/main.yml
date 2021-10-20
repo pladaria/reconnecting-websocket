@@ -21,8 +21,7 @@ jobs:
     - run: npm install
     - run: npm install --global rollup
     - run: npm install --global uglify-js
-    - run: npm run clean && rollup -c && uglifyjs --compress --mangle -o dist/reconnecting-websocket-iife.min.js dist/reconnecting-websocket-iife.js
-    - run: ls
+    - run: npm run build
     - name: Auto committing minified files
       uses: stefanzweifel/git-auto-commit-action@v4
       with:
