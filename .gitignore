@@ -1,11 +1,1 @@
-.node_repl_history
-.nyc_output
-.nyc_output
-.rpt2_cache
-.vscode
-coverage
 node_modules
-npm-debug.log*
-yarn*
-examples
-dist/*
