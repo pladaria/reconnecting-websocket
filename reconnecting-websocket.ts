@@ -34,6 +34,9 @@ export type Options = {
     maxEnqueuedMessages?: number;
     startClosed?: boolean;
     debug?: boolean;
+    options?: {
+        headers: { [headerName: string]: string };
+    } | null,
 };
 
 const DEFAULT = {
@@ -357,6 +360,7 @@ export default class ReconnectingWebSocket {
             maxRetries = DEFAULT.maxRetries,
             connectionTimeout = DEFAULT.connectionTimeout,
             WebSocket = getGlobalWebSocket(),
+            options = null,
         } = this._options;
 
         if (this._retryCount >= maxRetries) {
@@ -380,8 +384,8 @@ export default class ReconnectingWebSocket {
                 }
                 this._debug('connect', {url, protocols: this._protocols});
                 this._ws = this._protocols
-                    ? new WebSocket(url, this._protocols)
-                    : new WebSocket(url);
+                    ? new WebSocket(url, this._protocols, options)
+                    : new WebSocket(url, null, options);
                 this._ws!.binaryType = this._binaryType;
                 this._connectLock = false;
                 this._addListeners();
