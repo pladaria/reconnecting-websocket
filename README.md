@@ -98,6 +98,7 @@ const rws = new ReconnectingWebSocket('ws://my.site.com', [], options);
 ```typescript
 type Options = {
     WebSocket?: any; // WebSocket constructor, if none provided, defaults to global WebSocket
+    WebSocketOptions?: any; // WebSocket options
     maxReconnectionDelay?: number; // max delay in ms between reconnections
     minReconnectionDelay?: number; // min delay in ms between reconnections
     reconnectionDelayGrowFactor?: number; // how fast the reconnection delay grows
@@ -114,6 +115,7 @@ type Options = {
 
 ```javascript
 WebSocket: undefined,
+WebSocketOptions: {},
 maxReconnectionDelay: 10000,
 minReconnectionDelay: 1000 + Math.random() * 4000,
 reconnectionDelayGrowFactor: 1.3,
