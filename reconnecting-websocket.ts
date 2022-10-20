@@ -75,10 +75,10 @@ export default class ReconnectingWebSocket {
     private _binaryType: BinaryType = 'blob';
     private _closeCalled = false;
     private _messageQueue: Message[] = [];
+    private _options: Options;
 
     private readonly _url: UrlProvider;
     private readonly _protocols?: string | string[];
-    private readonly _options: Options;
 
     constructor(url: UrlProvider, protocols?: string | string[], options: Options = {}) {
         this._url = url;
@@ -234,10 +234,11 @@ export default class ReconnectingWebSocket {
      * Closes the WebSocket connection or connection attempt and connects again.
      * Resets retry counter;
      */
-    public reconnect(code?: number, reason?: string) {
+    public reconnect(code?: number, reason?: string, options?: Options) {
         this._shouldReconnect = true;
         this._closeCalled = false;
         this._retryCount = -1;
+        if (options) this._options = options;
         if (!this._ws || this._ws.readyState === this.CLOSED) {
             this._connect();
         } else {
