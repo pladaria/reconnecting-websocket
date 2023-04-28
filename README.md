@@ -89,6 +89,9 @@ const options = {
     WebSocket: WS, // custom WebSocket constructor
     connectionTimeout: 1000,
     maxRetries: 10,
+    extraOptions: {
+        headers : {} // apply custom headers to WebSocket constructor
+    }
 };
 const rws = new ReconnectingWebSocket('ws://my.site.com', [], options);
 ```
@@ -107,6 +110,7 @@ type Options = {
     maxEnqueuedMessages?: number; // maximum number of messages to buffer until reconnection
     startClosed?: boolean; // start websocket in CLOSED state, call `.reconnect()` to connect
     debug?: boolean; // enables debug output
+    extraOptions?: object; // passes options to WebSocket constructor
 };
 ```
 
@@ -123,6 +127,7 @@ maxRetries: Infinity,
 maxEnqueuedMessages: Infinity,
 startClosed: false,
 debug: false,
+extraOptions: {},
 ```
 
 ## API
