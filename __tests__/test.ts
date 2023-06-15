@@ -866,3 +866,73 @@ test('reconnect after closing', done => {
         }
     });
 });
+
+test('rapidly toggling connection', done => {
+    const wss = new WebSocketServer({port: PORT});
+    const ws = new ReconnectingWebSocket(URL, undefined, {
+        minReconnectionDelay: 100,
+        maxReconnectionDelay: 200,
+    });
+
+    ws.close();
+    ws.reconnect();
+    ws.close();
+    ws.reconnect();
+
+    let connections = 0;
+    wss.on('connection', () => {
+        connections++;
+    });
+
+    ws.addEventListener('open', () => {
+        wss.close(() => {
+            setTimeout(() => {
+                expect(connections).toBe(1);
+                done();
+            }, 1000);
+        });
+    });
+});
+
+test('reconnect after max retries', done => {
+    const ws = new ReconnectingWebSocket(URL, undefined, {
+        maxRetries: 1,
+        maxReconnectionDelay: 100,
+    });
+
+    let closed = false;
+    ws.addEventListener('error', () => {
+        if (ws.retryCount === 1 && !closed) {
+            const wss = new WebSocketServer({port: PORT});
+            ws.reconnect();
+            ws.addEventListener('open', () => {
+                wss.close(() => {
+                    closed = true;
+                    setTimeout(() => {
+                        done();
+                    }, 100);
+                });
+            });
+        }
+    });
+});
+test('reconnect after closing during connection', done => {
+    const wss = new WebSocketServer({port: PORT});
+    const ws = new ReconnectingWebSocket(URL, undefined, {
+        minReconnectionDelay: 100,
+        maxReconnectionDelay: 200,
+    });
+
+    ws.close();
+    setTimeout(() => {
+        ws.reconnect();
+
+        ws.addEventListener('open', () => {
+            wss.close(() => {
+                setTimeout(() => {
+                    done();
+                }, 1000);
+            });
+        });
+    }, 1000);
+});
