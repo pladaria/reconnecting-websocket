@@ -1,9 +1,12 @@
 # Reconnecting WebSocket
 
-[![Build Status](https://travis-ci.org/pladaria/reconnecting-websocket.svg?branch=master&v=1)](https://travis-ci.org/pladaria/reconnecting-websocket)
-[![Coverage Status](https://coveralls.io/repos/github/pladaria/reconnecting-websocket/badge.svg?branch=master&v=3)](https://coveralls.io/github/pladaria/reconnecting-websocket?branch=master)
-
 WebSocket that will automatically reconnect if the connection is closed.
+
+## Reason for fork
+
+We've forked this library to implement a bugfix for an issue where the websocket would
+be prevented from ever reconnecting if the close() method was called whilst the websocket was
+attempting to connect.
 
 ## Features
 
