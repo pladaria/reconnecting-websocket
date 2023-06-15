@@ -4,9 +4,11 @@ WebSocket that will automatically reconnect if the connection is closed.
 
 ## Reason for fork
 
-We've forked this library to implement a bugfix for an issue where the websocket would
-be prevented from ever reconnecting if the close() method was called whilst the websocket was
-attempting to connect.
+We've forked this library to implement a bugfix for an issue where the websocket would be prevented
+from ever reconnecting if the close() method was called whilst the websocket was attempting to
+connect.
+
+Please see for more details: https://github.com/pladaria/reconnecting-websocket/issues/165
 
 ## Features
 
